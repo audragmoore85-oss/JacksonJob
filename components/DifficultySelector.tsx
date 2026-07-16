@@ -1,0 +1,71 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { AgeGroup, DIFFICULTY_CONFIGS } from "@/lib/gameData";
+
+interface Props {
+  playerName: string;
+  onSelect: (group: AgeGroup) => void;
+}
+
+export default function DifficultySelector({ playerName, onSelect }: Props) {
+  const groups: AgeGroup[] = ["4-6", "7-9", "10-12"];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      className="min-h-screen flex flex-col items-center justify-center p-6"
+    >
+      <motion.h2
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="text-4xl font-bold text-kid-purple text-shadow-kid text-center mb-2"
+      >
+        Hi {playerName}! 👋
+      </motion.h2>
+      <p className="text-lg text-gray-600 text-center mb-8">
+        Pick your job level to get started!
+      </p>
+
+      <div className="grid gap-6 md:grid-cols-3 w-full max-w-3xl">
+        {groups.map((group, idx) => {
+          const config = DIFFICULTY_CONFIGS[group];
+          return (
+            <motion.button
+              key={group}
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: idx * 0.15 }}
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onSelect(group)}
+              className={`kid-card border-${config.color} hover:shadow-2xl cursor-pointer text-center group`}
+            >
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: idx * 0.3 }}
+                className="text-6xl mb-3"
+              >
+                {config.emoji}
+              </motion.div>
+              <h3 className={`text-2xl font-bold text-${config.color} mb-1`}>
+                {config.label}
+              </h3>
+              <p className="text-gray-500 font-semibold mb-3">Ages {group}</p>
+              <div className="text-sm text-gray-400 space-y-1">
+                <p>🔢 {group === "4-6" ? "Counting & Adding" : group === "7-9" ? "Add, Subtract, Multiply" : "All Operations"}</p>
+                <p>📚 {group === "4-6" ? "Simple Stories" : group === "7-9" ? "Short Passages" : "Complex Texts"}</p>
+                <p>⌨️ {group === "4-6" ? "Simple Words" : group === "7-9" ? "Sentences" : "Full Sentences"}</p>
+              </div>
+              <div className={`mt-4 kid-button bg-${config.color} w-full group-hover:brightness-110`}>
+                Choose This Level!
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
