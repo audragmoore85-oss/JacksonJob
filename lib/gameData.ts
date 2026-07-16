@@ -7,14 +7,36 @@ export interface DifficultyConfig {
   mathRange: { min: number; max: number };
   mathOperations: ("add" | "subtract" | "multiply" | "divide")[];
   readingPassages: ReadingPassage[];
-  typingWords: string[];
-  typingSentences: string[];
+  emailConversations: EmailConversation[];
 }
 
 export interface ReadingPassage {
   title: string;
   text: string;
   questions: { question: string; options: string[]; answer: number }[];
+}
+
+export interface EmailTemplate {
+  to: string;
+  subject: string;
+  body: string;
+}
+
+export interface Coworker {
+  name: string;
+  role: string;
+  avatar: string;
+  goodReply: string;
+  badReply: string;
+}
+
+export interface EmailConversation {
+  coworker: Coworker;
+  subject: string;
+  userTemplate: string;
+  coworkerReply: string;
+  userReplyTemplate: string;
+  coworkerFinalReply: string;
 }
 
 export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
@@ -53,8 +75,50 @@ export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
         ],
       },
     ],
-    typingWords: ["cat", "dog", "sun", "big", "red", "run", "fun", "hat", "box", "toy"],
-    typingSentences: ["I like to play.", "The cat is big.", "My dog can run."],
+    emailConversations: [
+      {
+        coworker: {
+          name: "Mr. Boss",
+          role: "The Boss",
+          avatar: "👨\u200d💼",
+          goodReply: "Great job today! I am glad you did your work. Keep it up! See you tomorrow.",
+          badReply: "Hmm, I could not read your email. How many cups of milk have you had today? Please try again!",
+        },
+        subject: "My Work Today",
+        userTemplate: "Hi Boss. I did my work today. I read a book. I did my math. It was fun. From, me.",
+        coworkerReply: "That is great! What book did you read? I love books too!",
+        userReplyTemplate: "I read a book about cats. It was a fun book. I like cats. From, me.",
+        coworkerFinalReply: "Cats are awesome! Thank you for telling me. Have a great day!",
+      },
+      {
+        coworker: {
+          name: "Ms. Smith",
+          role: "Office Helper",
+          avatar: "👩\u200d🏫",
+          goodReply: "Hello! It is nice to hear from you. I am glad you like your desk. Welcome to the team!",
+          badReply: "Oh no! Your email is hard to read. Do you have a pet dinosaur at home? Please fix your spelling and send again!",
+        },
+        subject: "Hello!",
+        userTemplate: "Hi Ms. Smith. I am at my desk. I like to work here. The work is fun. Thank you. From, me.",
+        coworkerReply: "You are welcome! What is your favorite thing to do at work?",
+        userReplyTemplate: "I like to read and do math. Math is my favorite. It is fun. From, me.",
+        coworkerFinalReply: "Math is my favorite too! You are doing a great job. Keep learning!",
+      },
+      {
+        coworker: {
+          name: "Mr. Tom",
+          role: "Mail Room",
+          avatar: "📬",
+          goodReply: "Hi there! It sounds like you had a great day! I am happy for you. See you soon!",
+          badReply: "Wait, what? I think a monkey ate your email! How many bananas do you have? Please check your spelling and try again!",
+        },
+        subject: "My Day",
+        userTemplate: "Hi Mr. Tom. I had a good day. I did all my jobs. I like my desk. It is a good day. From, me.",
+        coworkerReply: "That is wonderful! What was your favorite job today?",
+        userReplyTemplate: "My favorite job was reading. I read a big book. It was about a dog. From, me.",
+        coworkerFinalReply: "A book about a dog sounds great! Thank you for sharing. See you tomorrow!",
+      },
+    ],
   },
   "7-9": {
     label: "Junior Employee",
@@ -94,8 +158,50 @@ export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
         ],
       },
     ],
-    typingWords: ["school", "friend", "computer", "science", "reading", "pencil", "teacher", "library", "number", "puzzle"],
-    typingSentences: ["The quick brown fox jumps.", "I love to read books every day.", "Science is my favorite subject in school."],
+    emailConversations: [
+      {
+        coworker: {
+          name: "Mr. Johnson",
+          role: "Project Manager",
+          avatar: "🧑\u200d💼",
+          goodReply: "Hi Alex! Great work on the project. It sounds like you learned a lot. I am proud of you. Keep up the good work!",
+          badReply: "I had trouble understanding your email. Do you like eating pizza with pineapple? Please check your spelling and send it again!",
+        },
+        subject: "Project Update",
+        userTemplate: "Dear Mr. Johnson. I finished my project today. I read two books and solved five math problems. The science fair was very exciting. I learned a lot this week. Thank you for your help. Best regards, Alex.",
+        coworkerReply: "That is wonderful, Alex! What was your favorite part of the science fair?",
+        userReplyTemplate: "My favorite part was the volcano. It erupted with bubbles. Everyone clapped. It was the best. Best regards, Alex.",
+        coworkerFinalReply: "The volcano sounds amazing! You should be very proud. See you next week!",
+      },
+      {
+        coworker: {
+          name: "Ms. Garcia",
+          role: "Team Leader",
+          avatar: "👩\u200d💼",
+          goodReply: "Hi Sam! Thank you for the meeting notes. It sounds like the team is doing great. I look forward to reading your report on Friday!",
+          badReply: "Oh dear, I could not understand your email at all. Is your favorite color purple? Please proofread your email and try again!",
+        },
+        subject: "Meeting Notes",
+        userTemplate: "Dear Ms. Garcia. Here are my notes from the meeting today. We talked about the new project. I will finish my report by Friday. The team is doing a great job. Thank you. Sincerely, Sam.",
+        coworkerReply: "Thank you, Sam! Can you tell me more about the new project?",
+        userReplyTemplate: "The new project is about animals. We will learn about habitats. I want to study penguins. It will be fun. Sincerely, Sam.",
+        coworkerFinalReply: "Penguins are fascinating! I cannot wait to see your report. Great job, Sam!",
+      },
+      {
+        coworker: {
+          name: "Mrs. Lee",
+          role: "Field Trip Coordinator",
+          avatar: "🧑\u200d🏫",
+          goodReply: "Hi Jordan! I am so glad you are excited about the museum trip. It will be a wonderful adventure. Do not forget your notebook!",
+          badReply: "Hmm, I think a cat walked across your keyboard! Do you have a pet cat? Please fix your spelling and send your email again!",
+        },
+        subject: "Field Trip",
+        userTemplate: "Dear Mrs. Lee. I am writing about the field trip next week. I am very excited to visit the museum. I will bring my lunch and a notebook. I will take notes on what I see. Thank you for planning this trip. Sincerely, Jordan.",
+        coworkerReply: "You are very welcome, Jordan! What are you most excited to see at the museum?",
+        userReplyTemplate: "I want to see the dinosaurs. I love dinosaurs. They are so big. I will draw pictures of them. Sincerely, Jordan.",
+        coworkerFinalReply: "Dinosaurs are amazing! I hope you find some big ones. Have a wonderful trip, Jordan!",
+      },
+    ],
   },
   "10-12": {
     label: "Senior Associate",
@@ -138,11 +244,49 @@ export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
         ],
       },
     ],
-    typingWords: ["important", "knowledge", "technology", "education", "opportunity", "development", "communication", "responsibility", "achievement", "collaboration"],
-    typingSentences: [
-      "The important thing is to never stop learning new things.",
-      "Technology has changed the way we communicate with each other.",
-      "Taking responsibility for your actions shows great character and maturity.",
+    emailConversations: [
+      {
+        coworker: {
+          name: "Dr. Williams",
+          role: "Department Head",
+          avatar: "🧑\u200d🔬",
+          goodReply: "Dear Jordan, thank you for the detailed weekly report. I am impressed with your productivity and teamwork. Your dedication is commendable. Keep up the excellent work!",
+          badReply: "I received your email but it was unreadable. Do you prefer pancakes or waffles? Please proofread your message carefully and resend it!",
+        },
+        subject: "Weekly Report",
+        userTemplate: "Dear Dr. Williams. I am writing to share my weekly report with you. This week I completed three assignments and helped two coworkers with their projects. I also attended the team meeting on Wednesday. I believe we are making excellent progress on the current assignment. Thank you for your continued support and guidance. Sincerely, Jordan.",
+        coworkerReply: "Thank you, Jordan. I am curious, which assignment did you find most challenging this week?",
+        userReplyTemplate: "Dear Dr. Williams. The most challenging assignment was the research presentation. I had to gather a lot of information and organize it clearly. However, I learned a great deal from the process. Sincerely, Jordan.",
+        coworkerFinalReply: "That is excellent insight, Jordan. Challenging work helps us grow the most. I look forward to your next report!",
+      },
+      {
+        coworker: {
+          name: "Mr. Thompson",
+          role: "Team Supervisor",
+          avatar: "👨\u200d💻",
+          goodReply: "Hi Taylor, thank you for following up on the presentation. I am glad you are implementing the feedback. I look forward to seeing the updated version on Tuesday!",
+          badReply: "Your email was difficult to understand. Do you think fish can swim backwards? Please check your spelling and grammar, then try again!",
+        },
+        subject: "Presentation Feedback",
+        userTemplate: "Dear Mr. Thompson. Thank you for the opportunity to present my project to the team yesterday. I appreciated the feedback everyone provided. I have already started implementing the suggestions about improving the design. I will send the updated version by next Tuesday. Please let me know if you need anything else. Best regards, Taylor.",
+        coworkerReply: "You are very welcome, Taylor. What specific design improvements are you working on?",
+        userReplyTemplate: "Dear Mr. Thompson. I am improving the color scheme and making the text easier to read. I am also adding more pictures to make it more engaging. The team suggested these changes and I agree. Best regards, Taylor.",
+        coworkerFinalReply: "Those sound like excellent improvements, Taylor. The presentation will be much stronger. Great work!",
+      },
+      {
+        coworker: {
+          name: "Ms. Patel",
+          role: "Research Director",
+          avatar: "👩\u200d🔬",
+          goodReply: "Dear Morgan, thank you for sharing your research summary. Your findings on renewable energy are insightful. I appreciate your thorough analysis. I will review the full report shortly.",
+          badReply: "I could not make sense of your email. Have you ever tried to juggle oranges? Please proofread your work carefully and resend!",
+        },
+        subject: "Research Summary",
+        userTemplate: "Dear Ms. Patel. I have completed my research on renewable energy sources. Solar and wind power are becoming more affordable each year. Many countries are investing heavily in these technologies. I believe this transition will create numerous job opportunities. I have attached my full report for your review. Sincerely, Morgan.",
+        coworkerReply: "Excellent work, Morgan. Which renewable energy source do you think is most promising for the future?",
+        userReplyTemplate: "Dear Ms. Patel. I believe solar power is the most promising because the sun is available everywhere. The technology is improving rapidly and costs continue to decrease. Wind power is also excellent but requires specific locations. Sincerely, Morgan.",
+        coworkerFinalReply: "I completely agree with your analysis, Morgan. Solar power has tremendous potential. Thank you for your excellent research!",
+      },
     ],
   },
 };
@@ -184,9 +328,12 @@ export function generateMathProblem(config: DifficultyConfig): {
       if (config.mathRange.max <= 10) {
         a = Math.floor(Math.random() * 10) + 1;
         b = Math.floor(Math.random() * 10) + 1;
-      } else {
+      } else if (config.mathRange.max <= 100) {
         a = Math.floor(Math.random() * 12) + 2;
         b = Math.floor(Math.random() * 12) + 2;
+      } else {
+        a = Math.floor(Math.random() * 20) + 6;
+        b = Math.floor(Math.random() * 15) + 3;
       }
       answer = a * b;
       question = `${a} × ${b}`;

@@ -51,7 +51,7 @@ export default function DeskScene({
       emoji: "⌨️",
       color: "kid-blue",
       bgColor: "bg-kid-blue",
-      desc: "Type words and sentences!",
+      desc: "Email coworkers and chat!",
     },
   ];
 
