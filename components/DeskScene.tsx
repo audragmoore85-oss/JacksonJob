@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS } from "@/lib/gameData";
+import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy } from "lucide-react";
+import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, ACHIEVEMENTS } from "@/lib/gameData";
 
 interface Props {
   playerName: string;
@@ -10,7 +10,15 @@ interface Props {
   stars: number;
   stickers: string[];
   tasksCompleted: number;
+  decorations: string[];
+  streak: number;
+  dailyAvailable: boolean;
+  dailyChallengeProgress: string[];
+  unlockedAchievements: string[];
   onTaskSelect: (task: "math" | "reading" | "typing") => void;
+  onOpenShop: () => void;
+  onOpenReport: () => void;
+  onStartDailyChallenge: () => void;
   onReset: () => void;
 }
 
@@ -20,7 +28,15 @@ export default function DeskScene({
   stars,
   stickers,
   tasksCompleted,
+  decorations,
+  streak,
+  dailyAvailable,
+  dailyChallengeProgress,
+  unlockedAchievements,
   onTaskSelect,
+  onOpenShop,
+  onOpenReport,
+  onStartDailyChallenge,
   onReset,
 }: Props) {
   const config = DIFFICULTY_CONFIGS[ageGroup];
@@ -46,7 +62,7 @@ export default function DeskScene({
     },
     {
       id: "typing" as const,
-      label: "Typing Task",
+      label: "Email Task",
       icon: Keyboard,
       emoji: "⌨️",
       color: "kid-blue",
@@ -54,6 +70,10 @@ export default function DeskScene({
       desc: "Email coworkers and chat!",
     },
   ];
+
+  const ownedDecorationEmojis = decorations
+    .map((id) => DESK_DECORATIONS.find((d) => d.id === id)?.emoji)
+    .filter(Boolean);
 
   return (
     <motion.div
@@ -77,7 +97,27 @@ export default function DeskScene({
             <p className="text-sm text-gray-500">{config.label} • Age {ageGroup}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          {streak > 0 && (
+            <div className="flex items-center gap-1 bg-kid-pink/20 rounded-full px-3 py-2 shadow-md">
+              <Flame className="w-5 h-5 text-kid-pink" />
+              <span className="font-bold text-kid-pink text-sm">{streak}</span>
+            </div>
+          )}
+          <button
+            onClick={onOpenShop}
+            className="flex items-center gap-1 bg-white rounded-full px-3 py-2 shadow-md hover:scale-110 transition-transform"
+            title="Decoration Shop"
+          >
+            <ShoppingBag className="w-5 h-5 text-kid-purple" />
+          </button>
+          <button
+            onClick={onOpenReport}
+            className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            title="Progress Report"
+          >
+            <FileText className="w-5 h-5 text-kid-blue" />
+          </button>
           <div className="flex items-center gap-1 bg-white rounded-full px-4 py-2 shadow-md">
             <Star className="w-5 h-5 fill-kid-yellow text-kid-yellow" />
             <span className="font-bold text-gray-700">{stars}</span>
@@ -136,6 +176,46 @@ export default function DeskScene({
             }} />
           </div>
 
+          {/* Daily Challenge Banner */}
+          {dailyAvailable && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative z-10 mb-4 bg-gradient-to-r from-kid-purple to-kid-pink rounded-2xl p-4 text-white text-center cursor-pointer hover:scale-[1.02] transition-transform"
+              onClick={onStartDailyChallenge}
+            >
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <p className="font-bold text-lg flex items-center justify-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  Daily Challenge Available!
+                </p>
+                <p className="text-sm opacity-90">Complete all 3 tasks for +5 bonus stars!</p>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* In-progress Daily Challenge */}
+          {dailyChallengeProgress.length > 0 && dailyChallengeProgress.length < 3 && (
+            <div className="relative z-10 mb-4 bg-kid-purple/10 rounded-2xl p-3 border-2 border-kid-purple/30">
+              <p className="text-sm font-bold text-kid-purple text-center mb-2">
+                Daily Challenge: {dailyChallengeProgress.length}/3 tasks done
+              </p>
+              <div className="flex justify-center gap-2">
+                {["math", "reading", "typing"].map((t) => (
+                  <div
+                    key={t}
+                    className={`text-2xl ${dailyChallengeProgress.includes(t) ? "" : "opacity-30 grayscale"}`}
+                  >
+                    {t === "math" ? "🔢" : t === "reading" ? "📚" : "⌨️"}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Tasks Grid */}
           <div className="relative z-10 grid gap-4 md:grid-cols-3">
             {tasks.map((task, idx) => {
@@ -173,16 +253,31 @@ export default function DeskScene({
             })}
           </div>
 
-          {/* Desk Items */}
+          {/* Desk Items - owned decorations */}
           <div className="relative z-10 mt-6 flex justify-between items-end">
-            {/* Coffee Mug */}
-            <motion.div
-              animate={{ rotate: [0, -3, 0, 3, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="text-4xl"
-            >
-              ☕
-            </motion.div>
+            {/* Owned decorations */}
+            <div className="flex gap-2 flex-wrap max-w-xs">
+              {ownedDecorationEmojis.length > 0 ? (
+                ownedDecorationEmojis.map((emoji, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ y: [0, -3, 0], rotate: [0, 5, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, delay: i * 0.2 }}
+                    className="text-3xl"
+                  >
+                    {emoji}
+                  </motion.div>
+                ))
+              ) : (
+                <motion.div
+                  animate={{ rotate: [0, -3, 0, 3, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="text-4xl"
+                >
+                  ☕
+                </motion.div>
+              )}
+            </div>
 
             {/* Sticky Notes */}
             <div className="flex gap-2">
@@ -200,13 +295,13 @@ export default function DeskScene({
               </motion.div>
             </div>
 
-            {/* Plant */}
+            {/* Plant or Trophy */}
             <motion.div
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 4, repeat: Infinity }}
               className="text-4xl"
             >
-              🪴
+              {decorations.includes("plant") ? "🪴" : "📎"}
             </motion.div>
           </div>
         </div>
@@ -226,6 +321,34 @@ export default function DeskScene({
             </span>
           </div>
         </motion.div>
+
+        {/* Achievement Badges Row */}
+        {unlockedAchievements.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center gap-2 mt-4 flex-wrap"
+          >
+            {unlockedAchievements.slice(-6).map((aid) => {
+              const badge = ACHIEVEMENTS.find((b) => b.id === aid);
+              return badge ? (
+                <motion.div
+                  key={aid}
+                  whileHover={{ scale: 1.1, y: -3 }}
+                  className="bg-white rounded-full px-3 py-1 shadow-md flex items-center gap-1"
+                  title={badge.description}
+                >
+                  <span className="text-lg">{badge.emoji}</span>
+                </motion.div>
+              ) : null;
+            })}
+            {unlockedAchievements.length > 6 && (
+              <div className="bg-white rounded-full px-3 py-1 shadow-md text-xs font-bold text-gray-500">
+                +{unlockedAchievements.length - 6} more
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

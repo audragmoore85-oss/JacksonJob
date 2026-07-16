@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, RotateCcw, Star } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement } from "@/lib/gameData";
+import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement, getTodayString, isDailyChallengeAvailable, calculateStreak, AchievementStats, ACHIEVEMENTS } from "@/lib/gameData";
 import { playCelebrate, playClick } from "@/lib/sounds";
 import DeskScene from "@/components/DeskScene";
 import DifficultySelector from "@/components/DifficultySelector";
@@ -11,9 +11,84 @@ import MathTask from "@/components/MathTask";
 import ReadingTask from "@/components/ReadingTask";
 import TypingTask from "@/components/TypingTask";
 import StickerBoard from "@/components/StickerBoard";
+import DeskShop from "@/components/DeskShop";
+import ProgressReport from "@/components/ProgressReport";
 
-type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "celebration";
+type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "celebration" | "shop" | "report";
 type TaskType = "math" | "reading" | "typing";
+
+interface PlayerProfile {
+  playerName: string;
+  ageGroup: AgeGroup;
+  stickers: string[];
+  stars: number;
+  tasksCompleted: number;
+  decorations: string[];
+  mathCompleted: number;
+  readingCompleted: number;
+  typingCompleted: number;
+  perfectScores: number;
+  lastChallengeDate: string | null;
+  streak: number;
+  dailyChallengeProgress: string[];
+  unlockedAchievements: string[];
+}
+
+const PROFILES_KEY = "kidsDeskJobProfiles";
+
+function loadProfiles(): Record<string, PlayerProfile> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(PROFILES_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    // Migrate old single-profile format if present
+    const oldRaw = localStorage.getItem("kidsDeskJob");
+    if (oldRaw && (!parsed || Object.keys(parsed).length === 0)) {
+      const oldData = JSON.parse(oldRaw);
+      if (oldData.playerName && oldData.ageGroup) {
+        const migrated: Record<string, PlayerProfile> = {
+          [oldData.playerName.toLowerCase()]: {
+            playerName: oldData.playerName,
+            ageGroup: oldData.ageGroup,
+            stickers: oldData.stickers || [],
+            stars: oldData.stars || 0,
+            tasksCompleted: oldData.tasksCompleted || 0,
+            decorations: [],
+            mathCompleted: 0,
+            readingCompleted: 0,
+            typingCompleted: 0,
+            perfectScores: 0,
+            lastChallengeDate: null,
+            streak: 0,
+            dailyChallengeProgress: [],
+            unlockedAchievements: [],
+          },
+        };
+        localStorage.setItem(PROFILES_KEY, JSON.stringify(migrated));
+        localStorage.removeItem("kidsDeskJob");
+        return migrated;
+      }
+    }
+    return parsed || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveProfile(profile: PlayerProfile) {
+  if (typeof window === "undefined") return;
+  const profiles = loadProfiles();
+  profiles[profile.playerName.toLowerCase()] = profile;
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+}
+
+function deleteProfile(name: string) {
+  if (typeof window === "undefined") return;
+  const profiles = loadProfiles();
+  delete profiles[name.toLowerCase()];
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+}
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("welcome");
@@ -26,33 +101,47 @@ export default function Home() {
   const [pendingSticker, setPendingSticker] = useState<string | null>(null);
   const [earnedStars, setEarnedStars] = useState(0);
   const [encouragement, setEncouragement] = useState("");
+  const [savedProfiles, setSavedProfiles] = useState<Record<string, PlayerProfile>>({});
+  const [decorations, setDecorations] = useState<string[]>([]);
+  const [mathCompleted, setMathCompleted] = useState(0);
+  const [readingCompleted, setReadingCompleted] = useState(0);
+  const [typingCompleted, setTypingCompleted] = useState(0);
+  const [perfectScores, setPerfectScores] = useState(0);
+  const [lastChallengeDate, setLastChallengeDate] = useState<string | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [dailyChallengeProgress, setDailyChallengeProgress] = useState<string[]>([]);
+  const [isDailyChallenge, setIsDailyChallenge] = useState(false);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
+  const [newAchievements, setNewAchievements] = useState<string[]>([]);
 
   const config = ageGroup ? DIFFICULTY_CONFIGS[ageGroup] : null;
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = localStorage.getItem("kidsDeskJob");
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (data.playerName) setPlayerName(data.playerName);
-        if (data.ageGroup) setAgeGroup(data.ageGroup);
-        if (data.stickers) setStickers(data.stickers);
-        if (data.stars) setStars(data.stars);
-        if (data.tasksCompleted) setTasksCompleted(data.tasksCompleted);
-        if (data.screen && data.playerName && data.ageGroup) setScreen("desk");
-      } catch {}
-    }
+    const profiles = loadProfiles();
+    setSavedProfiles(profiles);
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (playerName && ageGroup) {
-      localStorage.setItem("kidsDeskJob", JSON.stringify({
-        playerName, ageGroup, stickers, stars, tasksCompleted, screen: "desk",
-      }));
+      saveProfile({
+        playerName,
+        ageGroup,
+        stickers,
+        stars,
+        tasksCompleted,
+        decorations,
+        mathCompleted,
+        readingCompleted,
+        typingCompleted,
+        perfectScores,
+        lastChallengeDate,
+        streak,
+        dailyChallengeProgress,
+        unlockedAchievements,
+      });
+      setSavedProfiles(loadProfiles());
     }
-  }, [playerName, ageGroup, stickers, stars, tasksCompleted]);
+  }, [playerName, ageGroup, stickers, stars, tasksCompleted, decorations, mathCompleted, readingCompleted, typingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements]);
 
   useEffect(() => {
     if (screen === "celebration" && pendingSticker) {
@@ -64,10 +153,41 @@ export default function Home() {
     }
   }, [screen, pendingSticker]);
 
+  useEffect(() => {
+    if (screen === "celebration") {
+      checkAchievements();
+    }
+  }, [screen]);
+
+  const loadProfileData = (profile: PlayerProfile) => {
+    setPlayerName(profile.playerName);
+    setAgeGroup(profile.ageGroup);
+    setStickers(profile.stickers || []);
+    setStars(profile.stars || 0);
+    setTasksCompleted(profile.tasksCompleted || 0);
+    setDecorations(profile.decorations || []);
+    setMathCompleted(profile.mathCompleted || 0);
+    setReadingCompleted(profile.readingCompleted || 0);
+    setTypingCompleted(profile.typingCompleted || 0);
+    setPerfectScores(profile.perfectScores || 0);
+    setLastChallengeDate(profile.lastChallengeDate || null);
+    setStreak(calculateStreak(profile.lastChallengeDate || null, profile.streak || 0));
+    setDailyChallengeProgress(profile.dailyChallengeProgress || []);
+    setUnlockedAchievements(profile.unlockedAchievements || []);
+    setIsDailyChallenge(false);
+  };
+
   const handleStart = () => {
     if (playerName.trim()) {
       playClick();
-      setScreen("difficulty");
+      const key = playerName.trim().toLowerCase();
+      const existing = savedProfiles[key];
+      if (existing) {
+        loadProfileData(existing);
+        setScreen("desk");
+      } else {
+        setScreen("difficulty");
+      }
     }
   };
 
@@ -80,6 +200,15 @@ export default function Home() {
   const handleTaskComplete = (taskType: TaskType, earnedStarsCount: number) => {
     setStars((prev) => prev + earnedStarsCount);
     setTasksCompleted((prev) => prev + 1);
+    if (taskType === "math") setMathCompleted((prev) => prev + 1);
+    if (taskType === "reading") setReadingCompleted((prev) => prev + 1);
+    if (taskType === "typing") setTypingCompleted((prev) => prev + 1);
+    if (earnedStarsCount === 3) setPerfectScores((prev) => prev + 1);
+
+    if (isDailyChallenge) {
+      setDailyChallengeProgress((prev) => [...prev, taskType]);
+    }
+
     setCompletedTaskType(taskType);
     setEarnedStars(earnedStarsCount);
     setPendingSticker(getRandomSticker());
@@ -88,6 +217,58 @@ export default function Home() {
     playCelebrate();
   };
 
+  const checkAchievements = () => {
+    const stats: AchievementStats = {
+      totalStars: stars,
+      tasksCompleted,
+      mathCompleted,
+      readingCompleted,
+      typingCompleted,
+      perfectScores,
+      streak,
+      stickersCollected: stickers.length,
+    };
+    const newlyUnlocked: string[] = [];
+    ACHIEVEMENTS.forEach((badge) => {
+      if (badge.check(stats) && !unlockedAchievements.includes(badge.id)) {
+        newlyUnlocked.push(badge.id);
+      }
+    });
+    if (newlyUnlocked.length > 0) {
+      setUnlockedAchievements((prev) => [...prev, ...newlyUnlocked]);
+      setNewAchievements(newlyUnlocked);
+    }
+  };
+
+  const handleBuyDecoration = (decorationId: string, cost: number) => {
+    if (stars >= cost && !decorations.includes(decorationId)) {
+      setStars((prev) => prev - cost);
+      setDecorations((prev) => [...prev, decorationId]);
+      playClick();
+    }
+  };
+
+  const handleDailyChallengeComplete = () => {
+    const today = getTodayString();
+    setLastChallengeDate(today);
+    setStreak((prev) => prev + 1);
+    setStars((prev) => prev + 5);
+    setPendingSticker(getRandomSticker());
+    setEncouragement("Daily Challenge Complete!");
+    setEarnedStars(5);
+    setDailyChallengeProgress([]);
+    setIsDailyChallenge(false);
+    setCompletedTaskType(null);
+    setScreen("celebration");
+    playCelebrate();
+  };
+
+  useEffect(() => {
+    if (isDailyChallenge && dailyChallengeProgress.length >= 3) {
+      handleDailyChallengeComplete();
+    }
+  }, [dailyChallengeProgress, isDailyChallenge]);
+
   const handleBackToDesk = () => {
     playClick();
     setScreen("desk");
@@ -95,16 +276,29 @@ export default function Home() {
   };
 
   const handleReset = () => {
-    localStorage.removeItem("kidsDeskJob");
+    if (playerName) {
+      deleteProfile(playerName);
+    }
+    setSavedProfiles(loadProfiles());
     setScreen("welcome");
     setPlayerName("");
     setAgeGroup(null);
     setStickers([]);
     setStars(0);
     setTasksCompleted(0);
+    setDecorations([]);
+    setMathCompleted(0);
+    setReadingCompleted(0);
+    setTypingCompleted(0);
+    setPerfectScores(0);
+    setLastChallengeDate(null);
+    setStreak(0);
+    setDailyChallengeProgress([]);
+    setUnlockedAchievements([]);
     setCompletedTaskType(null);
     setPendingSticker(null);
     setEarnedStars(0);
+    setIsDailyChallenge(false);
   };
 
   return (
@@ -132,9 +326,46 @@ export default function Home() {
             <p className="text-xl text-gray-600 text-center mb-8">
               Learn math, reading, and typing while working at your very own desk!
             </p>
+            {/* Existing Profiles */}
+            {Object.keys(savedProfiles).length > 0 && (
+              <div className="w-full max-w-md mb-4">
+                <p className="text-sm font-bold text-gray-500 mb-3 text-center">
+                  👋 Welcome back! Pick your name:
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.values(savedProfiles).map((profile) => {
+                    const pc = DIFFICULTY_CONFIGS[profile.ageGroup];
+                    return (
+                      <motion.button
+                        key={profile.playerName.toLowerCase()}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.05, y: -3 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          playClick();
+                          loadProfileData(profile);
+                          setScreen("desk");
+                        }}
+                        className={`kid-card border-${pc.color} text-center cursor-pointer`}
+                      >
+                        <div className="text-3xl mb-1">{pc.emoji}</div>
+                        <p className="font-bold text-gray-800 text-sm">{profile.playerName}</p>
+                        <div className="flex items-center justify-center gap-1 mt-1">
+                          <Star className="w-3 h-3 fill-kid-yellow text-kid-yellow" />
+                          <span className="text-xs font-bold text-gray-500">{profile.stars}</span>
+                          <span className="text-xs text-gray-400 ml-1">{profile.stickers?.length || 0} stickers</span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="kid-card border-kid-yellow w-full max-w-md">
               <label className="text-lg font-bold text-gray-700 mb-2 block">
-                What&apos;s your name? 🖊️
+                {Object.keys(savedProfiles).length > 0 ? "Or create a new profile:" : "What&apos;s your name? 🖊️"}
               </label>
               <input
                 type="text"
@@ -152,7 +383,7 @@ export default function Home() {
               >
                 <span className="flex items-center justify-center gap-2">
                   <Sparkles className="w-5 h-5" />
-                  Let&apos;s Go!
+                  {savedProfiles[playerName.trim().toLowerCase()] ? "Continue" : "Let&apos;s Go!"}
                 </span>
               </button>
             </div>
@@ -182,7 +413,15 @@ export default function Home() {
             stars={stars}
             stickers={stickers}
             tasksCompleted={tasksCompleted}
+            decorations={decorations}
+            streak={streak}
+            dailyAvailable={isDailyChallengeAvailable(lastChallengeDate)}
+            dailyChallengeProgress={dailyChallengeProgress}
+            unlockedAchievements={unlockedAchievements}
             onTaskSelect={(task) => setScreen(task)}
+            onOpenShop={() => setScreen("shop")}
+            onOpenReport={() => setScreen("report")}
+            onStartDailyChallenge={() => { setIsDailyChallenge(true); setDailyChallengeProgress([]); }}
             onReset={handleReset}
           />
         )}
@@ -243,7 +482,7 @@ export default function Home() {
                 {encouragement}, {playerName}!
               </h2>
               <p className="text-lg text-gray-600 mb-4">
-                You finished your {completedTaskType} task!
+                {completedTaskType ? `You finished your ${completedTaskType} task!` : "Amazing work!"}
               </p>
               <div className="flex justify-center gap-2 mb-4">
                 {[1, 2, 3].map((i) => (
@@ -277,8 +516,32 @@ export default function Home() {
               <p className="text-sm text-gray-500 mb-4">
                 A new sticker for your collection!
               </p>
+              {newAchievements.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2 }}
+                  className="bg-kid-purple/10 rounded-xl p-3 mb-4 border-2 border-kid-purple/30"
+                >
+                  <p className="text-sm font-bold text-kid-purple mb-2">🏆 New Achievement Unlocked!</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {newAchievements.map((aid) => {
+                      const badge = ACHIEVEMENTS.find((b) => b.id === aid);
+                      return badge ? (
+                        <div key={aid} className="flex items-center gap-1 bg-white rounded-lg px-2 py-1">
+                          <span className="text-xl">{badge.emoji}</span>
+                          <span className="text-xs font-bold text-gray-700">{badge.name}</span>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                </motion.div>
+              )}
               <button
-                onClick={handleBackToDesk}
+                onClick={() => {
+                  setNewAchievements([]);
+                  handleBackToDesk();
+                }}
                 className="kid-button bg-kid-green hover:bg-green-600 w-full"
               >
                 Back to Desk 🖥️
@@ -286,10 +549,40 @@ export default function Home() {
             </motion.div>
           </motion.div>
         )}
+
+        {/* SHOP SCREEN */}
+        {screen === "shop" && (
+          <DeskShop
+            key="shop"
+            stars={stars}
+            ownedDecorations={decorations}
+            onBuy={handleBuyDecoration}
+            onBack={() => setScreen("desk")}
+          />
+        )}
+
+        {/* REPORT SCREEN */}
+        {screen === "report" && config && ageGroup && (
+          <ProgressReport
+            key="report"
+            playerName={playerName}
+            ageGroup={ageGroup}
+            stars={stars}
+            tasksCompleted={tasksCompleted}
+            mathCompleted={mathCompleted}
+            readingCompleted={readingCompleted}
+            typingCompleted={typingCompleted}
+            perfectScores={perfectScores}
+            streak={streak}
+            stickersCount={stickers.length}
+            unlockedAchievements={unlockedAchievements}
+            onBack={() => setScreen("desk")}
+          />
+        )}
       </AnimatePresence>
 
       {/* Sticker Board - always visible on desk and task screens */}
-      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing") && (
+      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "shop" || screen === "report") && (
         <StickerBoard stickers={stickers} />
       )}
     </main>

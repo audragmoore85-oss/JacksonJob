@@ -375,3 +375,79 @@ export const STICKERS = [
 export function getRandomSticker(): string {
   return STICKERS[Math.floor(Math.random() * STICKERS.length)];
 }
+
+export interface DeskDecoration {
+  id: string;
+  name: string;
+  emoji: string;
+  cost: number;
+  description: string;
+}
+
+export const DESK_DECORATIONS: DeskDecoration[] = [
+  { id: "plant", name: "Desk Plant", emoji: "🪴", cost: 3, description: "A leafy green friend" },
+  { id: "lamp", name: "Desk Lamp", emoji: "💡", cost: 5, description: "Brighten up your desk" },
+  { id: "calendar", name: "Wall Calendar", emoji: "📅", cost: 5, description: "Stay organized" },
+  { id: "coffee", name: "Coffee Mug", emoji: "☕", cost: 3, description: "For productive mornings" },
+  { id: "fish", name: "Fish Tank", emoji: "🐠", cost: 10, description: "A swimming buddy" },
+  { id: "trophy", name: "Trophy", emoji: "🏆", cost: 15, description: "Show off your achievements" },
+  { id: "clock", name: "Fancy Clock", emoji: "⏰", cost: 7, description: "Never lose track of time" },
+  { id: "globe", name: "Desk Globe", emoji: "🌍", cost: 8, description: "Explore the world" },
+  { id: "headphones", name: "Headphones", emoji: "🎧", cost: 6, description: "Listen to music while working" },
+  { id: "picture", name: "Picture Frame", emoji: "🖼️", cost: 6, description: "A photo of loved ones" },
+  { id: "robot", name: "Desk Robot", emoji: "🤖", cost: 20, description: "Your personal assistant" },
+  { id: "rocket", name: "Mini Rocket", emoji: "🚀", cost: 12, description: "Reach for the stars!" },
+];
+
+export interface AchievementBadge {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  check: (stats: AchievementStats) => boolean;
+}
+
+export interface AchievementStats {
+  totalStars: number;
+  tasksCompleted: number;
+  mathCompleted: number;
+  readingCompleted: number;
+  typingCompleted: number;
+  perfectScores: number;
+  streak: number;
+  stickersCollected: number;
+}
+
+export const ACHIEVEMENTS: AchievementBadge[] = [
+  { id: "first_star", name: "First Star", emoji: "⭐", description: "Earn your first star", check: (s) => s.totalStars >= 1 },
+  { id: "ten_stars", name: "Rising Star", emoji: "🌟", description: "Earn 10 stars", check: (s) => s.totalStars >= 10 },
+  { id: "fifty_stars", name: "Superstar", emoji: "✨", description: "Earn 50 stars", check: (s) => s.totalStars >= 50 },
+  { id: "first_task", name: "Getting Started", emoji: "🎯", description: "Complete your first task", check: (s) => s.tasksCompleted >= 1 },
+  { id: "ten_tasks", name: "Hard Worker", emoji: "💪", description: "Complete 10 tasks", check: (s) => s.tasksCompleted >= 10 },
+  { id: "math_whiz", name: "Math Whiz", emoji: "🔢", description: "Complete 5 math tasks", check: (s) => s.mathCompleted >= 5 },
+  { id: "bookworm", name: "Bookworm", emoji: "📚", description: "Complete 5 reading tasks", check: (s) => s.readingCompleted >= 5 },
+  { id: "typist", name: "Email Pro", emoji: "⌨️", description: "Complete 5 typing tasks", check: (s) => s.typingCompleted >= 5 },
+  { id: "perfect", name: "Perfectionist", emoji: "💯", description: "Get 3 perfect scores", check: (s) => s.perfectScores >= 3 },
+  { id: "streak3", name: "On Fire", emoji: "🔥", description: "3-day streak", check: (s) => s.streak >= 3 },
+  { id: "streak7", name: "Unstoppable", emoji: "⚡", description: "7-day streak", check: (s) => s.streak >= 7 },
+  { id: "collector", name: "Collector", emoji: "🎨", description: "Collect 10 stickers", check: (s) => s.stickersCollected >= 10 },
+];
+
+export function getTodayString(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+export function isDailyChallengeAvailable(lastChallengeDate: string | null): boolean {
+  if (!lastChallengeDate) return true;
+  const today = getTodayString();
+  return lastChallengeDate !== today;
+}
+
+export function calculateStreak(lastChallengeDate: string | null, streak: number): number {
+  if (!lastChallengeDate) return 0;
+  const today = getTodayString();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  if (lastChallengeDate === today) return streak;
+  if (lastChallengeDate === yesterday) return streak;
+  return 0;
+}
