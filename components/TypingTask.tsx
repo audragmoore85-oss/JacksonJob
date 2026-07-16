@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Mail, AlertCircle, CheckCircle, RotateCw } from "lucide-react";
+import { ArrowLeft, Send, Mail, AlertCircle, CheckCircle, RotateCw, Lightbulb, Clock } from "lucide-react";
 import confetti from "canvas-confetti";
-import { DifficultyConfig, EmailConversation } from "@/lib/gameData";
+import { DifficultyConfig, EmailConversation, AgeGroup, TIMER_DURATIONS } from "@/lib/gameData";
 import { playCorrect, playWrong, playClick } from "@/lib/sounds";
 
 interface Props {
   config: DifficultyConfig;
+  ageGroup: AgeGroup;
   onComplete: (stars: number) => void;
   onBack: () => void;
 }
@@ -21,7 +22,7 @@ interface Message {
 
 type Phase = "compose" | "sending" | "reply" | "compose2" | "sending2" | "done";
 
-export default function TypingTask({ config, onComplete, onBack }: Props) {
+export default function TypingTask({ config, ageGroup, onComplete, onBack }: Props) {
   const [convIdx, setConvIdx] = useState(() =>
     Math.floor(Math.random() * config.emailConversations.length)
   );
@@ -36,11 +37,26 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
   const [errorCount, setErrorCount] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0);
+  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [timerMode, setTimerMode] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(TIMER_DURATIONS[ageGroup]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     textareaRef.current?.focus();
   }, [phase]);
+
+  useEffect(() => {
+    if (timerMode && timeLeft > 0 && (phase === "compose" || phase === "compose2")) {
+      const t = setTimeout(() => setTimeLeft((prev: number) => prev - 1), 1000);
+      return () => clearTimeout(t);
+    }
+    if (timerMode && timeLeft === 0 && (phase === "compose" || phase === "compose2")) {
+      handleSend();
+      setTimerMode(false);
+    }
+  }, [timerMode, timeLeft, phase]);
 
   const targetWords = (phase === "compose" || phase === "sending")
     ? conversation.userTemplate.split(/\s+/)
@@ -130,6 +146,10 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
     setAttempts(0);
     setTotalAttempts(0);
     setPhase("compose");
+    setTimerMode(false);
+    setTimeLeft(TIMER_DURATIONS[ageGroup]);
+    setShowKeyboard(false);
+    setShowHint(false);
     setTimeout(() => textareaRef.current?.focus(), 100);
   };
 
@@ -163,9 +183,44 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
           <ArrowLeft className="w-5 h-5" />
           Back to Desk
         </button>
-        <div className="flex items-center gap-2 bg-kid-blue/10 px-3 py-1 rounded-full">
-          <Mail className="w-4 h-4 text-kid-blue" />
-          <span className="text-sm font-bold text-kid-blue">Email Conversation</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-kid-blue/10 px-3 py-1 rounded-full">
+            <Mail className="w-4 h-4 text-kid-blue" />
+            <span className="text-sm font-bold text-kid-blue">Email Conversation</span>
+          </div>
+          {showTypingArea && (
+            <button
+              onClick={() => setShowKeyboard(!showKeyboard)}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                showKeyboard ? "bg-kid-purple text-white" : "bg-white text-kid-purple border-2 border-kid-purple/30"
+              }`}
+            >
+              ⌨️ Keyboard
+            </button>
+          )}
+          {showTypingArea && (
+            <button
+              onClick={() => setShowHint(!showHint)}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                showHint ? "bg-kid-yellow text-gray-800" : "bg-white text-kid-yellow border-2 border-kid-yellow/30"
+              }`}
+            >
+              <Lightbulb className="w-3 h-3 inline mr-1" />Hint
+            </button>
+          )}
+          {showTypingArea && !timerMode && (
+            <button
+              onClick={() => { setTimerMode(true); setTimeLeft(TIMER_DURATIONS[ageGroup]); }}
+              className="px-3 py-1 rounded-full text-xs font-bold bg-white text-kid-pink border-2 border-kid-pink/30"
+            >
+              <Clock className="w-3 h-3 inline mr-1" />Speed
+            </button>
+          )}
+          {timerMode && (
+            <div className={`px-3 py-1 rounded-full text-xs font-bold ${timeLeft <= 10 ? "bg-red-500 text-white animate-pulse" : "bg-kid-pink text-white"}`}>
+              ⏱️ {timeLeft}s
+            </div>
+          )}
         </div>
       </div>
 
@@ -240,6 +295,62 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
         {/* Target Email Template */}
         {showTypingArea && (
           <>
+            {/* Keyboard Guide */}
+            {showKeyboard && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-gray-50 rounded-xl p-3 mb-4 border-2 border-gray-200"
+              >
+                <p className="text-xs font-bold text-gray-500 mb-2">⌨️ Keyboard Guide</p>
+                <div className="flex flex-col gap-1 items-center">
+                  <div className="flex gap-1">
+                    {["Q","W","E","R","T","Y","U","I","O","P"].map((k) => (
+                      <div key={k} className="w-7 h-7 bg-white border border-gray-300 rounded flex items-center justify-center text-xs font-bold text-gray-600">{k}</div>
+                    ))}
+                  </div>
+                  <div className="flex gap-1 ml-3">
+                    {["A","S","D","F","G","H","J","K","L"].map((k) => (
+                      <div key={k} className={`w-7 h-7 bg-white border border-gray-300 rounded flex items-center justify-center text-xs font-bold ${"ASDFJKL".includes(k) ? "text-kid-blue border-kid-blue bg-kid-blue/10" : "text-gray-600"}`}>{k}</div>
+                    ))}
+                  </div>
+                  <div className="flex gap-1">
+                    {["Z","X","C","V","B","N","M"].map((k) => (
+                      <div key={k} className="w-7 h-7 bg-white border border-gray-300 rounded flex items-center justify-center text-xs font-bold text-gray-600">{k}</div>
+                    ))}
+                    <div className="w-16 h-7 bg-white border border-gray-300 rounded flex items-center justify-center text-xs font-bold text-gray-400">Space</div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Blue keys are home row fingers! 💪</p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Hint */}
+            {showHint && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-kid-yellow/10 rounded-xl p-3 mb-4 border-2 border-kid-yellow/30"
+              >
+                <div className="flex items-start gap-2">
+                  <Lightbulb className="w-5 h-5 text-kid-yellow flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-gray-700">Typing Tip:</p>
+                    <p className="text-sm text-gray-600">
+                      {ageGroup === "4-6"
+                        ? "Look at each word carefully. Type one word at a time!"
+                        : ageGroup === "7-9"
+                        ? "Use both hands! Left hand on ASDF, right hand on JKL;. Check each word before sending."
+                        : "Keep your fingers on the home row (ASDF JKL;). Use your thumbs for the space bar. Proofread before sending!"
+                    }
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             <div className="bg-kid-cream rounded-2xl p-4 mb-4 border-2 border-kid-yellow/40">
               <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">
                 {isSecondPhase ? "📋 Reply to their message:" : "📋 Type this email:"}

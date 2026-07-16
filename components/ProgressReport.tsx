@@ -12,6 +12,8 @@ interface Props {
   mathCompleted: number;
   readingCompleted: number;
   typingCompleted: number;
+  spellingCompleted: number;
+  logicCompleted: number;
   perfectScores: number;
   streak: number;
   stickersCount: number;
@@ -27,6 +29,8 @@ export default function ProgressReport({
   mathCompleted,
   readingCompleted,
   typingCompleted,
+  spellingCompleted,
+  logicCompleted,
   perfectScores,
   streak,
   stickersCount,
@@ -46,6 +50,8 @@ export default function ProgressReport({
     { label: "Math", value: mathCompleted, emoji: "🔢", color: "kid-orange" },
     { label: "Reading", value: readingCompleted, emoji: "📚", color: "kid-green" },
     { label: "Typing", value: typingCompleted, emoji: "⌨️", color: "kid-blue" },
+    { label: "Spelling", value: spellingCompleted, emoji: "📝", color: "kid-orange" },
+    { label: "Logic", value: logicCompleted, emoji: "📁", color: "kid-purple" },
   ];
 
   return (
@@ -111,7 +117,7 @@ export default function ProgressReport({
           <h3 className="font-bold text-gray-700 mb-3">Task Breakdown</h3>
           <div className="space-y-3">
             {taskBreakdown.map((task) => {
-              const maxVal = Math.max(mathCompleted, readingCompleted, typingCompleted, 1);
+              const maxVal = Math.max(mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, 1);
               const pct = (task.value / maxVal) * 100;
               return (
                 <div key={task.label}>

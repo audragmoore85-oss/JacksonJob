@@ -1,12 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, ACHIEVEMENTS } from "@/lib/gameData";
+import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee } from "lucide-react";
+import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, ACHIEVEMENTS, AVATARS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 
 interface Props {
   playerName: string;
   ageGroup: AgeGroup;
+  avatar: string;
   stars: number;
   stickers: string[];
   tasksCompleted: number;
@@ -15,16 +16,25 @@ interface Props {
   dailyAvailable: boolean;
   dailyChallengeProgress: string[];
   unlockedAchievements: string[];
-  onTaskSelect: (task: "math" | "reading" | "typing") => void;
+  bossProject: BossProjectData | null;
+  bossThreshold: number;
+  bossProjectsDone: string[];
+  onTaskSelect: (task: "math" | "reading" | "typing" | "spelling" | "logic") => void;
   onOpenShop: () => void;
   onOpenReport: () => void;
+  onOpenGallery: () => void;
+  onOpenParent: () => void;
+  onStartBoss: (projectId: string) => void;
   onStartDailyChallenge: () => void;
+  onCoffeeBreak: () => void;
+  onTogglePet: () => void;
   onReset: () => void;
 }
 
 export default function DeskScene({
   playerName,
   ageGroup,
+  avatar,
   stars,
   stickers,
   tasksCompleted,
@@ -33,10 +43,18 @@ export default function DeskScene({
   dailyAvailable,
   dailyChallengeProgress,
   unlockedAchievements,
+  bossProject,
+  bossThreshold,
+  bossProjectsDone,
   onTaskSelect,
   onOpenShop,
   onOpenReport,
+  onOpenGallery,
+  onOpenParent,
+  onStartBoss,
   onStartDailyChallenge,
+  onCoffeeBreak,
+  onTogglePet,
   onReset,
 }: Props) {
   const config = DIFFICULTY_CONFIGS[ageGroup];
@@ -69,7 +87,28 @@ export default function DeskScene({
       bgColor: "bg-kid-blue",
       desc: "Email coworkers and chat!",
     },
+    {
+      id: "spelling" as const,
+      label: "Word Processing",
+      icon: FileText,
+      emoji: "📝",
+      color: "kid-orange",
+      bgColor: "bg-kid-orange",
+      desc: "Unscramble words!",
+    },
+    {
+      id: "logic" as const,
+      label: "Filing Task",
+      icon: BookOpen,
+      emoji: "📁",
+      color: "kid-purple",
+      bgColor: "bg-kid-purple",
+      desc: "Solve pattern puzzles!",
+    },
   ];
+
+  const avatarEmoji = AVATARS.find((a) => a.id === avatar)?.emoji || "🧑‍💼";
+  const seasonalTheme = getCurrentSeasonalTheme();
 
   const ownedDecorationEmojis = decorations
     .map((id) => DESK_DECORATIONS.find((d) => d.id === id)?.emoji)
@@ -90,14 +129,14 @@ export default function DeskScene({
             transition={{ duration: 2, repeat: Infinity }}
             className="text-4xl"
           >
-            {config.emoji}
+            {avatarEmoji}
           </motion.div>
           <div>
             <h2 className="text-2xl font-bold text-gray-700">{playerName}&apos;s Desk</h2>
             <p className="text-sm text-gray-500">{config.label} • Age {ageGroup}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-3">
           {streak > 0 && (
             <div className="flex items-center gap-1 bg-kid-pink/20 rounded-full px-3 py-2 shadow-md">
               <Flame className="w-5 h-5 text-kid-pink" />
@@ -117,6 +156,27 @@ export default function DeskScene({
             title="Progress Report"
           >
             <FileText className="w-5 h-5 text-kid-blue" />
+          </button>
+          <button
+            onClick={onOpenGallery}
+            className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            title="Coworker Gallery"
+          >
+            <Users className="w-5 h-5 text-kid-green" />
+          </button>
+          <button
+            onClick={onOpenParent}
+            className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            title="Parent Dashboard"
+          >
+            <Lock className="w-5 h-5 text-kid-purple" />
+          </button>
+          <button
+            onClick={onCoffeeBreak}
+            className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            title="Coffee Break"
+          >
+            <Coffee className="w-5 h-5 text-kid-orange" />
           </button>
           <div className="flex items-center gap-1 bg-white rounded-full px-4 py-2 shadow-md">
             <Star className="w-5 h-5 fill-kid-yellow text-kid-yellow" />
@@ -142,8 +202,21 @@ export default function DeskScene({
             transition={{ duration: 4, repeat: Infinity }}
             className="absolute top-4 right-8 w-32 h-24 bg-white/30 rounded-lg border-4 border-white/50"
           >
-            <div className="flex justify-center items-center h-full text-3xl">☁️</div>
+            <div className="flex justify-center items-center h-full text-3xl">
+              {seasonalTheme ? seasonalTheme.deskEmoji : "☁️"}
+            </div>
           </motion.div>
+
+          {/* Seasonal Banner */}
+          {seasonalTheme && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-2 left-1/2 -translate-x-1/2 bg-white/40 rounded-full px-3 py-1 text-xs font-bold text-white"
+            >
+              {seasonalTheme.emoji} {seasonalTheme.name}!
+            </motion.div>
+          )}
 
           {/* Clock */}
           <motion.div
@@ -216,8 +289,52 @@ export default function DeskScene({
             </div>
           )}
 
+          {/* Boss Project Banner */}
+          {bossProject && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              className="relative z-10 mb-4 bg-gradient-to-r from-kid-pink to-kid-purple rounded-2xl p-4 text-white cursor-pointer hover:scale-[1.02] transition-transform"
+              onClick={() => onStartBoss(bossProject.id)}
+            >
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <p className="font-bold text-lg flex items-center justify-center gap-2">
+                  <span className="text-2xl">{bossProject.emoji}</span>
+                  {bossProject.name} - Big Project!
+                </p>
+                <p className="text-sm opacity-90 text-center">{bossProject.description}</p>
+                <p className="text-xs opacity-75 text-center mt-1">Reward: +{bossProject.bonusStars} stars + {bossProject.bonusSticker} sticker</p>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Boss Project Progress Indicator */}
+          {!bossProject && bossThreshold > 0 && bossProjectsDone.length < 4 && (
+            <div className="relative z-10 mb-4 bg-kid-pink/10 rounded-2xl p-3 border-2 border-kid-pink/20 text-center">
+              <p className="text-sm font-bold text-kid-pink">
+                📋 Complete {bossThreshold - tasksCompleted} more task{bossThreshold - tasksCompleted !== 1 ? "s" : ""} to unlock the next Big Project!
+              </p>
+            </div>
+          )}
+
+          {bossProjectsDone.length > 0 && (
+            <div className="relative z-10 mb-4 flex justify-center gap-2">
+              {bossProjectsDone.map((pid) => {
+                const proj = [{ id: "party", emoji: "🎉" }, { id: "report", emoji: "📊" }, { id: "hire", emoji: "🎓" }, { id: "launch", emoji: "🚀" }].find((p) => p.id === pid);
+                return (
+                  <div key={pid} className="bg-white rounded-full px-3 py-1 shadow-md text-sm font-bold text-gray-700">
+                    {proj?.emoji} Done!
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Tasks Grid */}
-          <div className="relative z-10 grid gap-4 md:grid-cols-3">
+          <div className="relative z-10 grid gap-4 md:grid-cols-3 lg:grid-cols-5">
             {tasks.map((task, idx) => {
               const Icon = task.icon;
               return (

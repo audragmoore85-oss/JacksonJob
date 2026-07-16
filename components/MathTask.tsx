@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check, X, Star } from "lucide-react";
+import { ArrowLeft, Check, X, Star, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
 import { DifficultyConfig, generateMathProblem, getRandomEncouragement } from "@/lib/gameData";
 import { playCorrect, playWrong } from "@/lib/sounds";
@@ -23,6 +23,8 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongShake, setWrongShake] = useState(false);
   const [encouragement, setEncouragement] = useState("");
+  const [showHint, setShowHint] = useState(false);
+  const [hintsUsed, setHintsUsed] = useState(0);
 
   const handleAnswer = (option: number) => {
     if (showResult) return;
@@ -58,6 +60,7 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
         setProblem(generateMathProblem(config));
         setSelected(null);
         setShowResult(false);
+        setShowHint(false);
       }
     }, 1800);
   };
@@ -93,6 +96,16 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
               {i < questionNum ? "✓" : i + 1}
             </div>
           ))}
+          {!showResult && (
+            <button
+              onClick={() => { setShowHint(!showHint); if (!showHint) setHintsUsed((prev) => prev + 1); }}
+              className={`ml-2 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                showHint ? "bg-kid-yellow text-gray-800" : "bg-white text-kid-yellow border-2 border-kid-yellow/30"
+              }`}
+            >
+              <Lightbulb className="w-3 h-3 inline mr-1" />Hint
+            </button>
+          )}
         </div>
       </div>
 
@@ -127,6 +140,30 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
                 {problem.question} = ?
               </p>
             </div>
+
+            {/* Hint */}
+            {showHint && !showResult && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-kid-yellow/10 rounded-xl p-3 mb-6 border-2 border-kid-yellow/30"
+              >
+                <div className="flex items-start gap-2">
+                  <Lightbulb className="w-5 h-5 text-kid-yellow flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-700">
+                    {problem.operation === "add"
+                      ? "Try counting up! Start from the first number and count forward by the second number."
+                      : problem.operation === "subtract"
+                      ? "Try counting down! Start from the first number and count backward by the second number."
+                      : problem.operation === "multiply"
+                      ? "Think of it as adding the same number many times. Or skip count!"
+                      : "Think: how many groups fit into the total? Try the options and check with multiplication."
+                    }
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
             {/* Answer Options */}
             <div className="grid grid-cols-2 gap-4">

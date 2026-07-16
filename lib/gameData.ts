@@ -305,6 +305,7 @@ export function generateMathProblem(config: DifficultyConfig): {
   question: string;
   answer: number;
   options: number[];
+  operation: string;
 } {
   const { min, max } = config.mathRange;
   const ops = config.mathOperations;
@@ -362,7 +363,7 @@ export function generateMathProblem(config: DifficultyConfig): {
   }
 
   const shuffled = Array.from(options).sort(() => Math.random() - 0.5);
-  return { question, answer, options: shuffled };
+  return { question, answer, options: shuffled, operation: op };
 }
 
 export const STICKERS = [
@@ -413,6 +414,8 @@ export interface AchievementStats {
   mathCompleted: number;
   readingCompleted: number;
   typingCompleted: number;
+  spellingCompleted: number;
+  logicCompleted: number;
   perfectScores: number;
   streak: number;
   stickersCollected: number;
@@ -431,6 +434,8 @@ export const ACHIEVEMENTS: AchievementBadge[] = [
   { id: "streak3", name: "On Fire", emoji: "🔥", description: "3-day streak", check: (s) => s.streak >= 3 },
   { id: "streak7", name: "Unstoppable", emoji: "⚡", description: "7-day streak", check: (s) => s.streak >= 7 },
   { id: "collector", name: "Collector", emoji: "🎨", description: "Collect 10 stickers", check: (s) => s.stickersCollected >= 10 },
+  { id: "speller", name: "Word Master", emoji: "📝", description: "Complete 5 spelling tasks", check: (s) => s.spellingCompleted >= 5 },
+  { id: "logician", name: "Logic Pro", emoji: "🧩", description: "Complete 5 logic tasks", check: (s) => s.logicCompleted >= 5 },
 ];
 
 export function getTodayString(): string {
@@ -451,3 +456,275 @@ export function calculateStreak(lastChallengeDate: string | null, streak: number
   if (lastChallengeDate === yesterday) return streak;
   return 0;
 }
+
+// ==================== SPELLING / VOCABULARY ====================
+
+export interface SpellingWord {
+  word: string;
+  scrambled: string;
+  hint: string;
+  definition: string;
+}
+
+export interface FillInBlank {
+  sentence: string;
+  blankedWord: string;
+  options: string[];
+  answer: number;
+}
+
+export const SPELLING_WORDS: Record<AgeGroup, SpellingWord[]> = {
+  "4-6": [
+    { word: "cat", scrambled: "tac", hint: "A furry pet that meows", definition: "A small furry pet" },
+    { word: "dog", scrambled: "ogd", hint: "A pet that barks", definition: "A pet that barks and wags its tail" },
+    { word: "sun", scrambled: "nus", hint: "Bright in the sky", definition: "The bright star in the sky during day" },
+    { word: "hat", scrambled: "ath", hint: "You wear it on your head", definition: "Something you wear on your head" },
+    { word: "box", scrambled: "oxb", hint: "You put things in it", definition: "A container with four sides" },
+    { word: "red", scrambled: "erd", hint: "A color like an apple", definition: "The color of an apple" },
+    { word: "big", scrambled: "igb", hint: "Not small", definition: "The opposite of small" },
+    { word: "run", scrambled: "unr", hint: "Moving fast on your feet", definition: "To move fast on your feet" },
+  ],
+  "7-9": [
+    { word: "school", scrambled: "ooslhc", hint: "Where you go to learn", definition: "A place where you learn" },
+    { word: "friend", scrambled: "riednf", hint: "Someone you like to play with", definition: "A person you like and trust" },
+    { word: "happy", scrambled: "ahppy", hint: "How you feel when smiling", definition: "Feeling joy or pleasure" },
+    { word: "planet", scrambled: "alntep", hint: "Earth is one", definition: "A large body in space that orbits a star" },
+    { word: "garden", scrambled: "adnreg", hint: "Where flowers grow", definition: "A place where plants and flowers grow" },
+    { word: "winter", scrambled: "iwntre", hint: "The coldest season", definition: "The coldest season of the year" },
+    { word: "pencil", scrambled: "ecnilp", hint: "You write with it", definition: "A writing tool made of wood and graphite" },
+    { word: "bridge", scrambled: "rigbed", hint: "It goes over a river", definition: "A structure that crosses over something" },
+  ],
+  "10-12": [
+    { word: "computer", scrambled: "opcmuter", hint: "You're using one now", definition: "An electronic device that processes data" },
+    { word: "science", scrambled: "ceinsce", hint: "The study of the natural world", definition: "The systematic study of the natural world" },
+    { word: "adventure", scrambled: "vntraeued", hint: "An exciting journey", definition: "An exciting or unusual experience" },
+    { word: "knowledge", scrambled: "ekngldowe", hint: "What you gain from learning", definition: "Information and skills acquired through experience" },
+    { word: "important", scrambled: "imnprttto", hint: "Something that matters a lot", definition: "Of great significance or value" },
+    { word: "discover", scrambled: "sdcoiver", hint: "To find something new", definition: "To find something for the first time" },
+    { word: "creative", scrambled: "ceravite", hint: "Using your imagination", definition: "Having the ability to make new things" },
+    { word: "language", scrambled: "lagugane", hint: "Words we use to communicate", definition: "A system of communication using words" },
+  ],
+};
+
+export const FILL_IN_BLANKS: Record<AgeGroup, FillInBlank[]> = {
+  "4-6": [
+    { sentence: "The ___ is yellow and bright.", blankedWord: "sun", options: ["sun", "cat", "box"], answer: 0 },
+    { sentence: "I wear a ___ on my head.", blankedWord: "hat", options: ["shoe", "hat", "ball"], answer: 1 },
+    { sentence: "The ___ says meow.", blankedWord: "cat", options: ["dog", "cat", "pig"], answer: 1 },
+    { sentence: "Grass is ___.", blankedWord: "green", options: ["red", "blue", "green"], answer: 2 },
+  ],
+  "7-9": [
+    { sentence: "We go to ___ to learn.", blankedWord: "school", options: ["park", "school", "store"], answer: 1 },
+    { sentence: "A ___ is someone you trust.", blankedWord: "friend", options: ["friend", "stranger", "enemy"], answer: 0 },
+    { sentence: "Earth is a ___.", blankedWord: "planet", options: ["moon", "planet", "star"], answer: 1 },
+    { sentence: "In ___ it snows.", blankedWord: "winter", options: ["summer", "winter", "spring"], answer: 1 },
+  ],
+  "10-12": [
+    { sentence: "A ___ processes information.", blankedWord: "computer", options: ["computer", "bicycle", "sandwich"], answer: 0 },
+    { sentence: "___ is the study of the natural world.", blankedWord: "science", options: ["art", "science", "music"], answer: 1 },
+    { sentence: "An ___ is an exciting journey.", blankedWord: "adventure", options: ["adventure", "apple", "answer"], answer: 0 },
+    { sentence: "Using your imagination makes you ___.", blankedWord: "creative", options: ["tired", "creative", "hungry"], answer: 1 },
+  ],
+};
+
+// ==================== LOGIC / PATTERN PUZZLES ====================
+
+export interface PatternPuzzle {
+  sequence: (string | number)[];
+  answer: string | number;
+  options: (string | number)[];
+  type: "shape" | "number" | "color";
+}
+
+export const PATTERN_PUZZLES: Record<AgeGroup, PatternPuzzle[]> = {
+  "4-6": [
+    { sequence: ["🔴", "🔵", "🔴", "🔵", "🔴"], answer: "🔵", options: ["🔴", "🔵", "🟡"], type: "color" },
+    { sequence: ["⭐", "🌙", "⭐", "🌙", "⭐"], answer: "🌙", options: ["⭐", "🌙", "☀️"], type: "shape" },
+    { sequence: [1, 2, 3, 4, 5], answer: 6, options: [5, 6, 8], type: "number" },
+    { sequence: ["🍎", "🍌", "🍎", "🍌", "🍎"], answer: "🍌", options: ["🍎", "🍌", "🍇"], type: "shape" },
+    { sequence: [2, 4, 6, 8, 10], answer: 12, options: [11, 12, 13], type: "number" },
+    { sequence: ["🔺", "🔻", "🔺", "🔻", "🔺"], answer: "🔻", options: ["🔺", "🔻", "⭕"], type: "shape" },
+  ],
+  "7-9": [
+    { sequence: [2, 4, 8, 16, 32], answer: 64, options: [48, 64, 80], type: "number" },
+    { sequence: [1, 1, 2, 3, 5, 8], answer: 13, options: [11, 13, 15], type: "number" },
+    { sequence: ["🔴", "🟡", "🟢", "🔴", "🟡"], answer: "🟢", options: ["🔴", "🟡", "🟢"], type: "color" },
+    { sequence: [3, 6, 9, 12, 15], answer: 18, options: [16, 17, 18], type: "number" },
+    { sequence: ["A", "B", "C", "A", "B"], answer: "C", options: ["A", "B", "C"], type: "shape" },
+    { sequence: [5, 10, 15, 20, 25], answer: 30, options: [28, 30, 35], type: "number" },
+  ],
+  "10-12": [
+    { sequence: [1, 4, 9, 16, 25], answer: 36, options: [30, 36, 42], type: "number" },
+    { sequence: [2, 6, 12, 20, 30], answer: 42, options: [36, 42, 48], type: "number" },
+    { sequence: [1, 1, 2, 3, 5, 8, 13], answer: 21, options: [18, 21, 24], type: "number" },
+    { sequence: [3, 9, 27, 81], answer: 243, options: [162, 243, 324], type: "number" },
+    { sequence: ["🔵", "🟢", "🟡", "🟠", "🔴", "🔵"], answer: "🟢", options: ["🔵", "🟢", "🟡"], type: "color" },
+    { sequence: [100, 90, 80, 70, 60], answer: 50, options: [45, 50, 55], type: "number" },
+  ],
+};
+
+// ==================== AVATARS ====================
+
+export const AVATARS = [
+  { id: "worker1", emoji: "🧑‍💻", name: "Tech Worker" },
+  { id: "worker2", emoji: "👩‍💼", name: "Business Woman" },
+  { id: "worker3", emoji: "🧑‍🔬", name: "Scientist" },
+  { id: "worker4", emoji: "👨‍💼", name: "Business Man" },
+  { id: "worker5", emoji: "👩‍💻", name: "Developer" },
+  { id: "worker6", emoji: "🧑‍🎨", name: "Designer" },
+  { id: "worker7", emoji: "👨‍🔬", name: "Researcher" },
+  { id: "worker8", emoji: "👩‍🔬", name: "Lab Tech" },
+  { id: "worker9", emoji: "🧑‍🚀", name: "Astronaut" },
+  { id: "worker10", emoji: "👨‍🚀", name: "Space Worker" },
+  { id: "worker11", emoji: "👩‍🚀", name: "Space Explorer" },
+  { id: "worker12", emoji: "🧑‍🔧", name: "Mechanic" },
+];
+
+// ==================== SEASONAL / HOLIDAY THEMES ====================
+
+export interface SeasonalTheme {
+  id: string;
+  name: string;
+  emoji: string;
+  deskEmoji: string;
+  bgGradient: string;
+  confettiEmoji: string;
+}
+
+export function getCurrentSeasonalTheme(): SeasonalTheme | null {
+  const now = new Date();
+  const month = now.getMonth();
+  const day = now.getDate();
+  if (month === 9 && day >= 15) return { id: "halloween", name: "Halloween", emoji: "🎃", deskEmoji: "👻", bgGradient: "from-orange-600 to-purple-900", confettiEmoji: "🎃" };
+  if (month === 10) return { id: "thanksgiving", name: "Thanksgiving", emoji: "🦃", deskEmoji: "🍂", bgGradient: "from-orange-700 to-yellow-800", confettiEmoji: "🍂" };
+  if (month === 11) return { id: "christmas", name: "Christmas", emoji: "🎄", deskEmoji: "🎅", bgGradient: "from-green-700 to-red-800", confettiEmoji: "🎄" };
+  if (month === 0 && day <= 5) return { id: "newyear", name: "New Year", emoji: "🎆", deskEmoji: "🎉", bgGradient: "from-purple-800 to-blue-900", confettiEmoji: "🎆" };
+  if (month === 1) return { id: "valentines", name: "Valentine's Day", emoji: "💝", deskEmoji: "💗", bgGradient: "from-pink-600 to-red-700", confettiEmoji: "💝" };
+  if (month === 2) return { id: "stpatricks", name: "St. Patrick's Day", emoji: "🍀", deskEmoji: "🌈", bgGradient: "from-green-600 to-emerald-800", confettiEmoji: "🍀" };
+  if (month === 6) return { id: "summer", name: "Summer", emoji: "☀️", deskEmoji: "🏖️", bgGradient: "from-yellow-400 to-orange-500", confettiEmoji: "☀️" };
+  if (month === 9 && day < 15) return { id: "autumn", name: "Autumn", emoji: "🍂", deskEmoji: "🍁", bgGradient: "from-orange-600 to-amber-700", confettiEmoji: "🍂" };
+  return null;
+}
+
+// ==================== OFFICE PET ====================
+
+export interface PetStage {
+  stage: number;
+  name: string;
+  emoji: string;
+  starsNeeded: number;
+  description: string;
+}
+
+export const PET_STAGES: PetStage[] = [
+  { stage: 0, name: "Egg", emoji: "🥚", starsNeeded: 0, description: "Your pet hasn't hatched yet!" },
+  { stage: 1, name: "Baby", emoji: "🐣", starsNeeded: 5, description: "A baby pet just hatched!" },
+  { stage: 2, name: "Kid", emoji: "🐥", starsNeeded: 15, description: "Your pet is growing up!" },
+  { stage: 3, name: "Teen", emoji: "🐤", starsNeeded: 30, description: "Your pet is getting bigger!" },
+  { stage: 4, name: "Adult", emoji: "🦅", starsNeeded: 50, description: "Your pet is fully grown!" },
+  { stage: 5, name: "Master", emoji: "🐉", starsNeeded: 100, description: "Your pet has evolved into a legend!" },
+];
+
+export function getPetStage(totalStars: number): PetStage {
+  let current = PET_STAGES[0];
+  for (const stage of PET_STAGES) {
+    if (totalStars >= stage.starsNeeded) current = stage;
+  }
+  return current;
+}
+
+export function getNextPetStage(totalStars: number): PetStage | null {
+  for (const stage of PET_STAGES) {
+    if (totalStars < stage.starsNeeded) return stage;
+  }
+  return null;
+}
+
+// ==================== BOSS BATTLE / BIG PROJECT ====================
+
+export interface BossProject {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  tasksRequired: number;
+  bonusStars: number;
+  bonusSticker: string;
+}
+
+export const BOSS_PROJECTS: BossProject[] = [
+  { id: "party", name: "Plan the Office Party", emoji: "🎉", description: "Complete 1 math + 1 reading + 1 email task to plan the best office party ever!", tasksRequired: 3, bonusStars: 10, bonusSticker: "🎊" },
+  { id: "report", name: "Quarterly Report", emoji: "📊", description: "Complete 1 math + 1 reading + 1 email task to finish the quarterly report!", tasksRequired: 3, bonusStars: 10, bonusSticker: "📈" },
+  { id: "hire", name: "New Hire Training", emoji: "🎓", description: "Complete 1 math + 1 reading + 1 email task to train the new employee!", tasksRequired: 3, bonusStars: 10, bonusSticker: "🎓" },
+  { id: "launch", name: "Product Launch", emoji: "🚀", description: "Complete 1 math + 1 reading + 1 email task to launch the new product!", tasksRequired: 3, bonusStars: 15, bonusSticker: "🚀" },
+];
+
+export function getAvailableBossProject(tasksCompleted: number, projectsDone: string[]): BossProject | null {
+  const nextIdx = projectsDone.length;
+  if (nextIdx >= BOSS_PROJECTS.length) return null;
+  const threshold = 3 + nextIdx * 5;
+  if (tasksCompleted >= threshold) return BOSS_PROJECTS[nextIdx];
+  return null;
+}
+
+export function getBossProjectThreshold(tasksCompleted: number, projectsDone: string[]): number {
+  const nextIdx = projectsDone.length;
+  if (nextIdx >= BOSS_PROJECTS.length) return -1;
+  return 3 + nextIdx * 5;
+}
+
+// ==================== COWORKER GALLERY ====================
+
+export interface GalleryCoworker {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  personality: string;
+  unlockAt: number;
+}
+
+export const COWORKER_GALLERY: GalleryCoworker[] = [
+  { id: "sam", name: "Sam", role: "Office Manager", avatar: "🧑‍💼", personality: "Friendly and organized", unlockAt: 0 },
+  { id: "alex", name: "Alex", role: "IT Support", avatar: "👨‍💻", personality: "Tech-savvy and helpful", unlockAt: 2 },
+  { id: "jordan", name: "Jordan", role: "Receptionist", avatar: "👩‍💼", personality: "Cheerful and welcoming", unlockAt: 4 },
+  { id: "taylor", name: "Taylor", role: "Accountant", avatar: "🧑‍🔬", personality: "Precise and detail-oriented", unlockAt: 6 },
+  { id: "morgan", name: "Morgan", role: "Marketing Lead", avatar: "👩‍🎨", personality: "Creative and energetic", unlockAt: 8 },
+  { id: "casey", name: "Casey", role: "HR Director", avatar: "👨‍🏫", personality: "Patient and supportive", unlockAt: 12 },
+  { id: "riley", name: "Riley", role: "CEO", avatar: "👩‍✈️", personality: "Inspiring and visionary", unlockAt: 20 },
+];
+
+export function getUnlockedCoworkers(typingCompleted: number): GalleryCoworker[] {
+  return COWORKER_GALLERY.filter((c) => typingCompleted >= c.unlockAt);
+}
+
+export function getLockedCoworkers(typingCompleted: number): GalleryCoworker[] {
+  return COWORKER_GALLERY.filter((c) => typingCompleted < c.unlockAt);
+}
+
+// ==================== TIMER MODE ====================
+
+export const TIMER_DURATIONS: Record<AgeGroup, number> = {
+  "4-6": 60,
+  "7-9": 45,
+  "10-12": 30,
+};
+
+// ==================== COFFEE BREAK ====================
+
+export interface CoffeeBreakItem {
+  id: string;
+  emoji: string;
+  name: string;
+}
+
+export const COFFEE_BREAK_ITEMS: CoffeeBreakItem[] = [
+  { id: "coffee", emoji: "☕", name: "Coffee" },
+  { id: "tea", emoji: "🫖", name: "Tea" },
+  { id: "water", emoji: "💧", name: "Water" },
+  { id: "juice", emoji: "🧃", name: "Juice" },
+  { id: "snack", emoji: "🍪", name: "Cookie" },
+  { id: "fruit", emoji: "🍎", name: "Apple" },
+  { id: "sandwich", emoji: "🥪", name: "Sandwich" },
+  { id: "donut", emoji: "🍩", name: "Donut" },
+];

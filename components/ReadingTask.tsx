@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check, X, Star } from "lucide-react";
+import { ArrowLeft, Check, X, Star, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
 import { DifficultyConfig, ReadingPassage, getRandomEncouragement } from "@/lib/gameData";
 import { playCorrect, playWrong } from "@/lib/sounds";
@@ -23,6 +23,7 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongShake, setWrongShake] = useState(false);
   const [encouragement, setEncouragement] = useState("");
+  const [showHint, setShowHint] = useState(false);
 
   const handleAnswer = (optionIdx: number) => {
     if (showResult) return;
@@ -55,6 +56,7 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
         setCurrentQuestion((prev) => prev + 1);
         setSelected(null);
         setShowResult(false);
+        setShowHint(false);
       }
     }, 1800);
   };
@@ -92,6 +94,16 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
               {i < currentQuestion ? "✓" : i + 1}
             </div>
           ))}
+          {!showResult && (
+            <button
+              onClick={() => setShowHint(!showHint)}
+              className={`ml-2 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                showHint ? "bg-kid-yellow text-gray-800" : "bg-white text-kid-yellow border-2 border-kid-yellow/30"
+              }`}
+            >
+              <Lightbulb className="w-3 h-3 inline mr-1" />Hint
+            </button>
+          )}
         </div>
       </div>
 
@@ -127,6 +139,23 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
             <p className="text-lg font-bold text-gray-700 mb-4 text-center">
               {q.question}
             </p>
+
+            {/* Hint */}
+            {showHint && !showResult && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-kid-yellow/10 rounded-xl p-3 mb-4 border-2 border-kid-yellow/30"
+              >
+                <div className="flex items-start gap-2">
+                  <Lightbulb className="w-5 h-5 text-kid-yellow flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-700">
+                    Go back and read the story again. Look for keywords in the question and find them in the story. The answer is usually right there!
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
             <div className="space-y-3">
               {q.options.map((option, idx) => {

@@ -1,15 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AgeGroup, DIFFICULTY_CONFIGS } from "@/lib/gameData";
+import { AgeGroup, DIFFICULTY_CONFIGS, AVATARS } from "@/lib/gameData";
 import { playClick } from "@/lib/sounds";
 
 interface Props {
   playerName: string;
   onSelect: (group: AgeGroup) => void;
+  selectedAvatar: string;
+  onSelectAvatar: (avatarId: string) => void;
 }
 
-export default function DifficultySelector({ playerName, onSelect }: Props) {
+export default function DifficultySelector({ playerName, onSelect, selectedAvatar, onSelectAvatar }: Props) {
   const groups: AgeGroup[] = ["4-6", "7-9", "10-12"];
 
   return (
@@ -26,9 +28,34 @@ export default function DifficultySelector({ playerName, onSelect }: Props) {
       >
         Hi {playerName}! 👋
       </motion.h2>
-      <p className="text-lg text-gray-600 text-center mb-8">
+      <p className="text-lg text-gray-600 text-center mb-6">
         Pick your job level to get started!
       </p>
+
+      {/* Avatar Builder */}
+      <div className="w-full max-w-3xl mb-6">
+        <p className="text-sm font-bold text-gray-500 text-center mb-3">
+          Choose your office character:
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {AVATARS.map((av) => (
+            <motion.button
+              key={av.id}
+              whileHover={{ scale: 1.1, y: -3 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { playClick(); onSelectAvatar(av.id); }}
+              className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border-4 transition-all ${
+                selectedAvatar === av.id
+                  ? "bg-kid-purple/20 border-kid-purple shadow-lg scale-110"
+                  : "bg-white border-gray-200 hover:border-kid-purple"
+              }`}
+              title={av.name}
+            >
+              {av.emoji}
+            </motion.button>
+          ))}
+        </div>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-3 w-full max-w-3xl">
         {groups.map((group, idx) => {

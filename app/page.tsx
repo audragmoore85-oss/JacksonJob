@@ -3,23 +3,31 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, RotateCcw, Star } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement, getTodayString, isDailyChallengeAvailable, calculateStreak, AchievementStats, ACHIEVEMENTS } from "@/lib/gameData";
+import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement, getTodayString, isDailyChallengeAvailable, calculateStreak, AchievementStats, ACHIEVEMENTS, AVATARS, getAvailableBossProject, getBossProjectThreshold, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 import { playCelebrate, playClick } from "@/lib/sounds";
 import DeskScene from "@/components/DeskScene";
 import DifficultySelector from "@/components/DifficultySelector";
 import MathTask from "@/components/MathTask";
 import ReadingTask from "@/components/ReadingTask";
 import TypingTask from "@/components/TypingTask";
+import SpellingTask from "@/components/SpellingTask";
+import LogicTask from "@/components/LogicTask";
 import StickerBoard from "@/components/StickerBoard";
 import DeskShop from "@/components/DeskShop";
 import ProgressReport from "@/components/ProgressReport";
+import OfficePet from "@/components/OfficePet";
+import BossProjectScreen from "@/components/BossProject";
+import CoworkerGallery from "@/components/CoworkerGallery";
+import CoffeeBreak from "@/components/CoffeeBreak";
+import ParentDashboard from "@/components/ParentDashboard";
 
-type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "celebration" | "shop" | "report";
-type TaskType = "math" | "reading" | "typing";
+type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
+type TaskType = "math" | "reading" | "typing" | "spelling" | "logic";
 
 interface PlayerProfile {
   playerName: string;
   ageGroup: AgeGroup;
+  avatar: string;
   stickers: string[];
   stars: number;
   tasksCompleted: number;
@@ -27,11 +35,17 @@ interface PlayerProfile {
   mathCompleted: number;
   readingCompleted: number;
   typingCompleted: number;
+  spellingCompleted: number;
+  logicCompleted: number;
   perfectScores: number;
   lastChallengeDate: string | null;
   streak: number;
   dailyChallengeProgress: string[];
   unlockedAchievements: string[];
+  bossProjectsDone: string[];
+  bossProjectProgress: string[];
+  activeBossProject: string | null;
+  showPet: boolean;
 }
 
 const PROFILES_KEY = "kidsDeskJobProfiles";
@@ -51,6 +65,7 @@ function loadProfiles(): Record<string, PlayerProfile> {
           [oldData.playerName.toLowerCase()]: {
             playerName: oldData.playerName,
             ageGroup: oldData.ageGroup,
+            avatar: AVATARS[0].id,
             stickers: oldData.stickers || [],
             stars: oldData.stars || 0,
             tasksCompleted: oldData.tasksCompleted || 0,
@@ -58,11 +73,17 @@ function loadProfiles(): Record<string, PlayerProfile> {
             mathCompleted: 0,
             readingCompleted: 0,
             typingCompleted: 0,
+            spellingCompleted: 0,
+            logicCompleted: 0,
             perfectScores: 0,
             lastChallengeDate: null,
             streak: 0,
             dailyChallengeProgress: [],
             unlockedAchievements: [],
+            bossProjectsDone: [],
+            bossProjectProgress: [],
+            activeBossProject: null,
+            showPet: true,
           },
         };
         localStorage.setItem(PROFILES_KEY, JSON.stringify(migrated));
@@ -102,10 +123,13 @@ export default function Home() {
   const [earnedStars, setEarnedStars] = useState(0);
   const [encouragement, setEncouragement] = useState("");
   const [savedProfiles, setSavedProfiles] = useState<Record<string, PlayerProfile>>({});
+  const [avatar, setAvatar] = useState<string>(AVATARS[0].id);
   const [decorations, setDecorations] = useState<string[]>([]);
   const [mathCompleted, setMathCompleted] = useState(0);
   const [readingCompleted, setReadingCompleted] = useState(0);
   const [typingCompleted, setTypingCompleted] = useState(0);
+  const [spellingCompleted, setSpellingCompleted] = useState(0);
+  const [logicCompleted, setLogicCompleted] = useState(0);
   const [perfectScores, setPerfectScores] = useState(0);
   const [lastChallengeDate, setLastChallengeDate] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
@@ -113,6 +137,12 @@ export default function Home() {
   const [isDailyChallenge, setIsDailyChallenge] = useState(false);
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
   const [newAchievements, setNewAchievements] = useState<string[]>([]);
+  const [bossProjectsDone, setBossProjectsDone] = useState<string[]>([]);
+  const [bossProjectProgress, setBossProjectProgress] = useState<string[]>([]);
+  const [activeBossProject, setActiveBossProject] = useState<string | null>(null);
+  const [showPet, setShowPet] = useState(true);
+  const [showCoffeeBreak, setShowCoffeeBreak] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(AVATARS[0].id);
 
   const config = ageGroup ? DIFFICULTY_CONFIGS[ageGroup] : null;
 
@@ -126,6 +156,7 @@ export default function Home() {
       saveProfile({
         playerName,
         ageGroup,
+        avatar,
         stickers,
         stars,
         tasksCompleted,
@@ -133,15 +164,21 @@ export default function Home() {
         mathCompleted,
         readingCompleted,
         typingCompleted,
+        spellingCompleted,
+        logicCompleted,
         perfectScores,
         lastChallengeDate,
         streak,
         dailyChallengeProgress,
         unlockedAchievements,
+        bossProjectsDone,
+        bossProjectProgress,
+        activeBossProject,
+        showPet,
       });
       setSavedProfiles(loadProfiles());
     }
-  }, [playerName, ageGroup, stickers, stars, tasksCompleted, decorations, mathCompleted, readingCompleted, typingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements]);
+  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet]);
 
   useEffect(() => {
     if (screen === "celebration" && pendingSticker) {
@@ -162,6 +199,7 @@ export default function Home() {
   const loadProfileData = (profile: PlayerProfile) => {
     setPlayerName(profile.playerName);
     setAgeGroup(profile.ageGroup);
+    setAvatar(profile.avatar || AVATARS[0].id);
     setStickers(profile.stickers || []);
     setStars(profile.stars || 0);
     setTasksCompleted(profile.tasksCompleted || 0);
@@ -169,11 +207,17 @@ export default function Home() {
     setMathCompleted(profile.mathCompleted || 0);
     setReadingCompleted(profile.readingCompleted || 0);
     setTypingCompleted(profile.typingCompleted || 0);
+    setSpellingCompleted(profile.spellingCompleted || 0);
+    setLogicCompleted(profile.logicCompleted || 0);
     setPerfectScores(profile.perfectScores || 0);
     setLastChallengeDate(profile.lastChallengeDate || null);
     setStreak(calculateStreak(profile.lastChallengeDate || null, profile.streak || 0));
     setDailyChallengeProgress(profile.dailyChallengeProgress || []);
     setUnlockedAchievements(profile.unlockedAchievements || []);
+    setBossProjectsDone(profile.bossProjectsDone || []);
+    setBossProjectProgress(profile.bossProjectProgress || []);
+    setActiveBossProject(profile.activeBossProject || null);
+    setShowPet(profile.showPet !== false);
     setIsDailyChallenge(false);
   };
 
@@ -194,6 +238,7 @@ export default function Home() {
   const handleDifficultySelect = (group: AgeGroup) => {
     playClick();
     setAgeGroup(group);
+    setAvatar(selectedAvatar);
     setScreen("desk");
   };
 
@@ -203,10 +248,27 @@ export default function Home() {
     if (taskType === "math") setMathCompleted((prev) => prev + 1);
     if (taskType === "reading") setReadingCompleted((prev) => prev + 1);
     if (taskType === "typing") setTypingCompleted((prev) => prev + 1);
+    if (taskType === "spelling") setSpellingCompleted((prev) => prev + 1);
+    if (taskType === "logic") setLogicCompleted((prev) => prev + 1);
     if (earnedStarsCount === 3) setPerfectScores((prev) => prev + 1);
 
-    if (isDailyChallenge) {
+    if (isDailyChallenge && (taskType === "math" || taskType === "reading" || taskType === "typing")) {
       setDailyChallengeProgress((prev) => [...prev, taskType]);
+    }
+
+    if (activeBossProject && (taskType === "math" || taskType === "reading" || taskType === "typing") && !bossProjectProgress.includes(taskType)) {
+      const newProgress = [...bossProjectProgress, taskType];
+      setBossProjectProgress(newProgress);
+      if (newProgress.length >= 3) {
+        const project = BOSS_PROJECTS.find((p) => p.id === activeBossProject);
+        if (project) {
+          setStars((prev) => prev + project.bonusStars);
+          setStickers((prev) => [...prev, project.bonusSticker]);
+          setBossProjectsDone((prev) => [...prev, project.id]);
+          setActiveBossProject(null);
+          setBossProjectProgress([]);
+        }
+      }
     }
 
     setCompletedTaskType(taskType);
@@ -224,6 +286,8 @@ export default function Home() {
       mathCompleted,
       readingCompleted,
       typingCompleted,
+      spellingCompleted,
+      logicCompleted,
       perfectScores,
       streak,
       stickersCollected: stickers.length,
@@ -271,6 +335,10 @@ export default function Home() {
 
   const handleBackToDesk = () => {
     playClick();
+    if (pendingSticker) {
+      setStickers((prev) => [...prev, pendingSticker]);
+      setPendingSticker(null);
+    }
     setScreen("desk");
     setCompletedTaskType(null);
   };
@@ -283,6 +351,7 @@ export default function Home() {
     setScreen("welcome");
     setPlayerName("");
     setAgeGroup(null);
+    setAvatar(AVATARS[0].id);
     setStickers([]);
     setStars(0);
     setTasksCompleted(0);
@@ -290,15 +359,23 @@ export default function Home() {
     setMathCompleted(0);
     setReadingCompleted(0);
     setTypingCompleted(0);
+    setSpellingCompleted(0);
+    setLogicCompleted(0);
     setPerfectScores(0);
     setLastChallengeDate(null);
     setStreak(0);
     setDailyChallengeProgress([]);
     setUnlockedAchievements([]);
+    setBossProjectsDone([]);
+    setBossProjectProgress([]);
+    setActiveBossProject(null);
     setCompletedTaskType(null);
     setPendingSticker(null);
     setEarnedStars(0);
     setIsDailyChallenge(false);
+    setShowPet(true);
+    setShowCoffeeBreak(false);
+    setSelectedAvatar(AVATARS[0].id);
   };
 
   return (
@@ -318,7 +395,7 @@ export default function Home() {
               transition={{ duration: 3, repeat: Infinity }}
               className="text-8xl mb-4"
             >
-              🏢
+              {getCurrentSeasonalTheme()?.emoji || "🏢"}
             </motion.div>
             <h1 className="text-5xl md:text-6xl font-bold text-kid-blue text-shadow-kid text-center mb-2">
               Kids Desk Job
@@ -335,6 +412,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-3">
                   {Object.values(savedProfiles).map((profile) => {
                     const pc = DIFFICULTY_CONFIGS[profile.ageGroup];
+                    const av = AVATARS.find((a) => a.id === profile.avatar) || AVATARS[0];
                     return (
                       <motion.button
                         key={profile.playerName.toLowerCase()}
@@ -349,7 +427,7 @@ export default function Home() {
                         }}
                         className={`kid-card border-${pc.color} text-center cursor-pointer`}
                       >
-                        <div className="text-3xl mb-1">{pc.emoji}</div>
+                        <div className="text-3xl mb-1">{av.emoji}</div>
                         <p className="font-bold text-gray-800 text-sm">{profile.playerName}</p>
                         <div className="flex items-center justify-center gap-1 mt-1">
                           <Star className="w-3 h-3 fill-kid-yellow text-kid-yellow" />
@@ -360,12 +438,39 @@ export default function Home() {
                     );
                   })}
                 </div>
+
+                {/* Leaderboard */}
+                {Object.keys(savedProfiles).length > 1 && (
+                  <div className="mt-4 bg-gradient-to-r from-kid-yellow/20 to-kid-orange/20 rounded-2xl p-3 border-2 border-kid-yellow/40">
+                    <p className="text-sm font-bold text-kid-orange text-center mb-2">🏆 Leaderboard</p>
+                    <div className="space-y-1">
+                      {Object.values(savedProfiles)
+                        .sort((a, b) => b.stars - a.stars)
+                        .slice(0, 5)
+                        .map((profile, idx) => {
+                          const av = AVATARS.find((a) => a.id === profile.avatar) || AVATARS[0];
+                          const medals = ["🥇", "🥈", "🥉"];
+                          return (
+                            <div key={profile.playerName.toLowerCase()} className="flex items-center gap-2 bg-white/60 rounded-lg px-3 py-1">
+                              <span className="text-sm font-bold w-6">{medals[idx] || `${idx + 1}.`}</span>
+                              <span className="text-lg">{av.emoji}</span>
+                              <span className="text-sm font-bold text-gray-700 flex-1 text-left">{profile.playerName}</span>
+                              <span className="text-sm font-bold text-kid-orange flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-kid-yellow text-kid-yellow" />
+                                {profile.stars}
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             <div className="kid-card border-kid-yellow w-full max-w-md">
               <label className="text-lg font-bold text-gray-700 mb-2 block">
-                {Object.keys(savedProfiles).length > 0 ? "Or create a new profile:" : "What&apos;s your name? 🖊️"}
+                {Object.keys(savedProfiles).length > 0 ? "Or create a new profile:" : "What's your name? 🖊️"}
               </label>
               <input
                 type="text"
@@ -383,7 +488,7 @@ export default function Home() {
               >
                 <span className="flex items-center justify-center gap-2">
                   <Sparkles className="w-5 h-5" />
-                  {savedProfiles[playerName.trim().toLowerCase()] ? "Continue" : "Let&apos;s Go!"}
+                  {savedProfiles[playerName.trim().toLowerCase()] ? "Continue" : "Let's Go!"}
                 </span>
               </button>
             </div>
@@ -401,6 +506,8 @@ export default function Home() {
             key="difficulty"
             playerName={playerName}
             onSelect={handleDifficultySelect}
+            selectedAvatar={selectedAvatar}
+            onSelectAvatar={setSelectedAvatar}
           />
         )}
 
@@ -410,6 +517,7 @@ export default function Home() {
             key="desk"
             playerName={playerName}
             ageGroup={ageGroup}
+            avatar={avatar}
             stars={stars}
             stickers={stickers}
             tasksCompleted={tasksCompleted}
@@ -418,10 +526,18 @@ export default function Home() {
             dailyAvailable={isDailyChallengeAvailable(lastChallengeDate)}
             dailyChallengeProgress={dailyChallengeProgress}
             unlockedAchievements={unlockedAchievements}
+            bossProject={getAvailableBossProject(tasksCompleted, bossProjectsDone)}
+            bossThreshold={getBossProjectThreshold(tasksCompleted, bossProjectsDone)}
+            bossProjectsDone={bossProjectsDone}
             onTaskSelect={(task) => setScreen(task)}
             onOpenShop={() => setScreen("shop")}
             onOpenReport={() => setScreen("report")}
+            onOpenGallery={() => setScreen("gallery")}
+            onOpenParent={() => setScreen("parent")}
+            onStartBoss={(projId) => { setActiveBossProject(projId); setBossProjectProgress([]); setScreen("boss"); }}
             onStartDailyChallenge={() => { setIsDailyChallenge(true); setDailyChallengeProgress([]); }}
+            onCoffeeBreak={() => setShowCoffeeBreak(true)}
+            onTogglePet={() => setShowPet(!showPet)}
             onReset={handleReset}
           />
         )}
@@ -432,7 +548,7 @@ export default function Home() {
             key="math"
             config={config}
             onComplete={(earned) => handleTaskComplete("math", earned)}
-            onBack={() => setScreen("desk")}
+            onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
           />
         )}
 
@@ -442,7 +558,7 @@ export default function Home() {
             key="reading"
             config={config}
             onComplete={(earned) => handleTaskComplete("reading", earned)}
-            onBack={() => setScreen("desk")}
+            onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
           />
         )}
 
@@ -451,8 +567,31 @@ export default function Home() {
           <TypingTask
             key="typing"
             config={config}
+            ageGroup={ageGroup}
             onComplete={(earned) => handleTaskComplete("typing", earned)}
-            onBack={() => setScreen("desk")}
+            onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
+          />
+        )}
+
+        {/* SPELLING TASK */}
+        {screen === "spelling" && config && ageGroup && (
+          <SpellingTask
+            key="spelling"
+            config={config}
+            ageGroup={ageGroup}
+            onComplete={(earned) => handleTaskComplete("spelling", earned)}
+            onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
+          />
+        )}
+
+        {/* LOGIC TASK */}
+        {screen === "logic" && config && ageGroup && (
+          <LogicTask
+            key="logic"
+            config={config}
+            ageGroup={ageGroup}
+            onComplete={(earned) => handleTaskComplete("logic", earned)}
+            onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
           />
         )}
 
@@ -572,6 +711,8 @@ export default function Home() {
             mathCompleted={mathCompleted}
             readingCompleted={readingCompleted}
             typingCompleted={typingCompleted}
+            spellingCompleted={spellingCompleted}
+            logicCompleted={logicCompleted}
             perfectScores={perfectScores}
             streak={streak}
             stickersCount={stickers.length}
@@ -579,10 +720,84 @@ export default function Home() {
             onBack={() => setScreen("desk")}
           />
         )}
+
+        {/* BOSS PROJECT SCREEN */}
+        {screen === "boss" && activeBossProject && (
+          <BossProjectScreen
+            key="boss"
+            project={BOSS_PROJECTS.find((p) => p.id === activeBossProject)!}
+            progress={bossProjectProgress}
+            onBack={() => { setActiveBossProject(null); setBossProjectProgress([]); setScreen("desk"); }}
+            onStartTask={(task) => setScreen(task)}
+          />
+        )}
+
+        {/* COWORKER GALLERY SCREEN */}
+        {screen === "gallery" && (
+          <CoworkerGallery
+            key="gallery"
+            typingCompleted={typingCompleted}
+            onBack={() => setScreen("desk")}
+          />
+        )}
+
+        {/* PARENT DASHBOARD SCREEN */}
+        {screen === "parent" && ageGroup && (
+          <ParentDashboard
+            key="parent"
+            playerName={playerName}
+            ageGroup={ageGroup}
+            stars={stars}
+            tasksCompleted={tasksCompleted}
+            mathCompleted={mathCompleted}
+            readingCompleted={readingCompleted}
+            typingCompleted={typingCompleted}
+            spellingCompleted={spellingCompleted}
+            logicCompleted={logicCompleted}
+            perfectScores={perfectScores}
+            streak={streak}
+            stickersCount={stickers.length}
+            unlockedAchievements={unlockedAchievements}
+            onBack={() => setScreen("desk")}
+            onExport={() => {
+              try {
+                const data = localStorage.getItem(PROFILES_KEY) || "{}";
+                const blob = new Blob([data], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "kids-desk-job-profiles.json";
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch {}
+            }}
+            onImport={(data) => {
+              try {
+                localStorage.setItem(PROFILES_KEY, data);
+                setSavedProfiles(loadProfiles());
+                setScreen("welcome");
+              } catch { }
+            }}
+            onForceDifficulty={(group) => {
+              setAgeGroup(group);
+              setScreen("desk");
+            }}
+          />
+        )}
       </AnimatePresence>
 
+      {/* Office Pet - visible on desk screen */}
+      {showPet && screen === "desk" && (
+        <OfficePet totalStars={stars} onClose={() => setShowPet(false)} />
+      )}
+
+      {/* Coffee Break overlay */}
+      {showCoffeeBreak && (
+        <CoffeeBreak onComplete={() => setShowCoffeeBreak(false)} />
+      )}
+
       {/* Sticker Board - always visible on desk and task screens */}
-      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "shop" || screen === "report") && (
+      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "spelling" || screen === "logic" || screen === "shop" || screen === "report") && (
         <StickerBoard stickers={stickers} />
       )}
     </main>
