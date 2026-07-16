@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, RotateCcw, Star, Trophy } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker } from "@/lib/gameData";
+import { Sparkles, RotateCcw, Star } from "lucide-react";
+import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement } from "@/lib/gameData";
+import { playCelebrate, playClick } from "@/lib/sounds";
 import DeskScene from "@/components/DeskScene";
 import DifficultySelector from "@/components/DifficultySelector";
 import MathTask from "@/components/MathTask";
@@ -23,8 +24,35 @@ export default function Home() {
   const [tasksCompleted, setTasksCompleted] = useState(0);
   const [completedTaskType, setCompletedTaskType] = useState<TaskType | null>(null);
   const [pendingSticker, setPendingSticker] = useState<string | null>(null);
+  const [earnedStars, setEarnedStars] = useState(0);
+  const [encouragement, setEncouragement] = useState("");
 
   const config = ageGroup ? DIFFICULTY_CONFIGS[ageGroup] : null;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("kidsDeskJob");
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.playerName) setPlayerName(data.playerName);
+        if (data.ageGroup) setAgeGroup(data.ageGroup);
+        if (data.stickers) setStickers(data.stickers);
+        if (data.stars) setStars(data.stars);
+        if (data.tasksCompleted) setTasksCompleted(data.tasksCompleted);
+        if (data.screen && data.playerName && data.ageGroup) setScreen("desk");
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (playerName && ageGroup) {
+      localStorage.setItem("kidsDeskJob", JSON.stringify({
+        playerName, ageGroup, stickers, stars, tasksCompleted, screen: "desk",
+      }));
+    }
+  }, [playerName, ageGroup, stickers, stars, tasksCompleted]);
 
   useEffect(() => {
     if (screen === "celebration" && pendingSticker) {
@@ -38,29 +66,36 @@ export default function Home() {
 
   const handleStart = () => {
     if (playerName.trim()) {
+      playClick();
       setScreen("difficulty");
     }
   };
 
   const handleDifficultySelect = (group: AgeGroup) => {
+    playClick();
     setAgeGroup(group);
     setScreen("desk");
   };
 
-  const handleTaskComplete = (taskType: TaskType, earnedStars: number) => {
-    setStars((prev) => prev + earnedStars);
+  const handleTaskComplete = (taskType: TaskType, earnedStarsCount: number) => {
+    setStars((prev) => prev + earnedStarsCount);
     setTasksCompleted((prev) => prev + 1);
     setCompletedTaskType(taskType);
+    setEarnedStars(earnedStarsCount);
     setPendingSticker(getRandomSticker());
+    setEncouragement(getRandomEncouragement());
     setScreen("celebration");
+    playCelebrate();
   };
 
   const handleBackToDesk = () => {
+    playClick();
     setScreen("desk");
     setCompletedTaskType(null);
   };
 
   const handleReset = () => {
+    localStorage.removeItem("kidsDeskJob");
     setScreen("welcome");
     setPlayerName("");
     setAgeGroup(null);
@@ -69,6 +104,7 @@ export default function Home() {
     setTasksCompleted(0);
     setCompletedTaskType(null);
     setPendingSticker(null);
+    setEarnedStars(0);
   };
 
   return (
@@ -204,7 +240,7 @@ export default function Home() {
                 🎉
               </motion.div>
               <h2 className="text-3xl font-bold text-kid-orange mb-2">
-                Great Job, {playerName}!
+                {encouragement}, {playerName}!
               </h2>
               <p className="text-lg text-gray-600 mb-4">
                 You finished your {completedTaskType} task!
@@ -217,10 +253,17 @@ export default function Home() {
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ delay: i * 0.2, type: "spring" }}
                   >
-                    <Star className="w-10 h-10 fill-kid-yellow text-kid-yellow" />
+                    <Star
+                      className={`w-10 h-10 ${
+                        i <= earnedStars ? "fill-kid-yellow text-kid-yellow" : "fill-gray-200 text-gray-200"
+                      }`}
+                    />
                   </motion.div>
                 ))}
               </div>
+              {earnedStars === 3 && (
+                <p className="text-kid-orange font-bold mb-2">⭐ Perfect Score! ⭐</p>
+              )}
               {pendingSticker && (
                 <motion.div
                   initial={{ scale: 0, y: 50 }}

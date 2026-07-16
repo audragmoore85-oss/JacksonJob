@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, RotateCcw, Phone, Monitor, BookOpen, Calculator, Keyboard } from "lucide-react";
+import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard } from "lucide-react";
 import { AgeGroup, DIFFICULTY_CONFIGS } from "@/lib/gameData";
 
 interface Props {

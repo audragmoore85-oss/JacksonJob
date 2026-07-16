@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check, X, BookOpen, Star } from "lucide-react";
+import { ArrowLeft, Check, X, Star } from "lucide-react";
 import confetti from "canvas-confetti";
-import { DifficultyConfig, ReadingPassage } from "@/lib/gameData";
+import { DifficultyConfig, ReadingPassage, getRandomEncouragement } from "@/lib/gameData";
+import { playCorrect, playWrong } from "@/lib/sounds";
 
 interface Props {
   config: DifficultyConfig;
@@ -13,13 +14,15 @@ interface Props {
 }
 
 export default function ReadingTask({ config, onComplete, onBack }: Props) {
-  const passage: ReadingPassage =
-    config.readingPassages[Math.floor(Math.random() * config.readingPassages.length)];
+  const [passage] = useState<ReadingPassage>(() =>
+    config.readingPassages[Math.floor(Math.random() * config.readingPassages.length)]
+  );
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongShake, setWrongShake] = useState(false);
+  const [encouragement, setEncouragement] = useState("");
 
   const handleAnswer = (optionIdx: number) => {
     if (showResult) return;
@@ -29,6 +32,8 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
     const isCorrect = optionIdx === passage.questions[currentQuestion].answer;
     if (isCorrect) {
       setCorrectCount((prev) => prev + 1);
+      setEncouragement(getRandomEncouragement());
+      playCorrect();
       confetti({
         particleCount: 50,
         spread: 60,
@@ -37,6 +42,7 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
       });
     } else {
       setWrongShake(true);
+      playWrong();
       setTimeout(() => setWrongShake(false), 500);
     }
 
@@ -79,7 +85,7 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
                 i < currentQuestion
                   ? "bg-kid-green text-white"
                   : i === currentQuestion
-                  ? "bg-kid-green text-white animate-pulse"
+                  ? "bg-kid-orange text-white animate-pulse"
                   : "bg-gray-200 text-gray-400"
               }`}
             >
@@ -161,6 +167,9 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
         <div className="flex items-center justify-center gap-2 text-gray-600 mt-6">
           <Star className="w-5 h-5 fill-kid-yellow text-kid-yellow" />
           <span className="font-bold">{correctCount} correct so far!</span>
+          {encouragement && showResult && (
+            <span className="ml-2 text-kid-green font-bold animate-pop">{encouragement}!</span>
+          )}
         </div>
       </motion.div>
     </motion.div>

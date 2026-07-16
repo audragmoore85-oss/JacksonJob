@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { AgeGroup, DIFFICULTY_CONFIGS } from "@/lib/gameData";
+import { playClick } from "@/lib/sounds";
 
 interface Props {
   playerName: string;
@@ -40,7 +41,7 @@ export default function DifficultySelector({ playerName, onSelect }: Props) {
               transition={{ delay: idx * 0.15 }}
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => onSelect(group)}
+              onClick={() => { playClick(); onSelect(group); }}
               className={`kid-card border-${config.color} hover:shadow-2xl cursor-pointer text-center group`}
             >
               <motion.div

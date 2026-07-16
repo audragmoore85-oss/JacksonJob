@@ -1,9 +1,20 @@
 import type { Config } from "tailwindcss";
 
+const kidColors = ["kid-blue", "kid-green", "kid-yellow", "kid-orange", "kid-pink", "kid-purple"];
+
 const config: Config = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  safelist: [
+    ...kidColors.flatMap((c) => [
+      `text-${c}`,
+      `bg-${c}`,
+      `border-${c}`,
+      `hover:bg-${c}`,
+      `hover:border-${c}`,
+    ]),
   ],
   theme: {
     extend: {

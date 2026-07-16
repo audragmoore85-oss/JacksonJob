@@ -4,7 +4,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Check, X, Star } from "lucide-react";
 import confetti from "canvas-confetti";
-import { DifficultyConfig, generateMathProblem } from "@/lib/gameData";
+import { DifficultyConfig, generateMathProblem, getRandomEncouragement } from "@/lib/gameData";
+import { playCorrect, playWrong } from "@/lib/sounds";
 
 interface Props {
   config: DifficultyConfig;
@@ -21,6 +22,7 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
   const [showResult, setShowResult] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongShake, setWrongShake] = useState(false);
+  const [encouragement, setEncouragement] = useState("");
 
   const handleAnswer = (option: number) => {
     if (showResult) return;
@@ -29,6 +31,8 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
 
     if (option === problem.answer) {
       setCorrectCount((prev) => prev + 1);
+      setEncouragement(getRandomEncouragement());
+      playCorrect();
       confetti({
         particleCount: 50,
         spread: 60,
@@ -37,6 +41,7 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
       });
     } else {
       setWrongShake(true);
+      playWrong();
       setTimeout(() => setWrongShake(false), 500);
     }
 
@@ -167,6 +172,9 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
         <div className="flex items-center justify-center gap-2 text-gray-600">
           <Star className="w-5 h-5 fill-kid-yellow text-kid-yellow" />
           <span className="font-bold">{correctCount} correct so far!</span>
+          {encouragement && showResult && (
+            <span className="ml-2 text-kid-green font-bold animate-pop">{encouragement}!</span>
+          )}
         </div>
       </motion.div>
     </motion.div>

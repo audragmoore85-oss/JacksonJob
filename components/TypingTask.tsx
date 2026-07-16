@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Star, Keyboard } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import confetti from "canvas-confetti";
 import { DifficultyConfig } from "@/lib/gameData";
+import { playCorrect } from "@/lib/sounds";
 
 interface Props {
   config: DifficultyConfig;
@@ -18,6 +19,8 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
   const [input, setInput] = useState("");
   const [completed, setCompleted] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
+  const [totalKeystrokes, setTotalKeystrokes] = useState(0);
+  const [correctKeystrokes, setCorrectKeystrokes] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const items = mode === "words" ? config.typingWords : config.typingSentences;
@@ -35,6 +38,7 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
     if (val.toLowerCase().trim() === currentItem.toLowerCase().trim()) {
       setFeedback("correct");
       setCompleted((prev) => [...prev, currentItem]);
+      playCorrect();
       confetti({
         particleCount: 30,
         spread: 50,
@@ -44,7 +48,8 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
 
       setTimeout(() => {
         if (completed.length + 1 >= totalRounds) {
-          const stars = 3;
+          const accuracy = totalKeystrokes > 0 ? correctKeystrokes / totalKeystrokes : 1;
+          const stars = accuracy >= 0.9 ? 3 : accuracy >= 0.7 ? 2 : 1;
           onComplete(stars);
         } else {
           setCurrentIdx((prev) => prev + 1);
@@ -54,10 +59,16 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
       }, 800);
     } else if (currentItem.toLowerCase().startsWith(val.toLowerCase()) && val.length > 0) {
       setFeedback("idle");
+      setTotalKeystrokes((prev) => prev + 1);
+      setCorrectKeystrokes((prev) => prev + 1);
     } else if (val.length >= currentItem.length) {
       setFeedback("wrong");
+      setTotalKeystrokes((prev) => prev + 1);
     } else {
       setFeedback("idle");
+      setTotalKeystrokes((prev) => prev + 1);
+      const matchCount = val.split("").filter((c, i) => c.toLowerCase() === currentItem[i]?.toLowerCase()).length;
+      setCorrectKeystrokes((prev) => prev + (matchCount > correctKeystrokes % currentItem.length ? 1 : 0));
     }
   };
 
@@ -197,7 +208,14 @@ export default function TypingTask({ config, onComplete, onBack }: Props) {
         <div className="mt-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-bold text-gray-500">Progress</span>
-            <span className="text-sm font-bold text-gray-500">{completed.length} / {totalRounds}</span>
+            <span className="text-sm font-bold text-gray-500">
+              {completed.length} / {totalRounds}
+              {totalKeystrokes > 0 && (
+                <span className="ml-2 text-kid-blue">
+                  ({Math.round((correctKeystrokes / totalKeystrokes) * 100)}% accuracy)
+                </span>
+              )}
+            </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
             <motion.div
