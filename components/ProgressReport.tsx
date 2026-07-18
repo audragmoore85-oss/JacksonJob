@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, Printer, Award, Flame, Target, CheckCircle } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, ACHIEVEMENTS } from "@/lib/gameData";
+import type { ElementType } from "react";
+import { ArrowLeft, Star, Printer, Award, Flame, Target, CheckCircle, TrendingUp } from "lucide-react";
+import { AgeGroup, DIFFICULTY_CONFIGS, ACHIEVEMENTS, AchievementBadge } from "@/lib/gameData";
 
 interface Props {
   playerName: string;
@@ -19,6 +20,40 @@ interface Props {
   stickersCount: number;
   unlockedAchievements: string[];
   onBack: () => void;
+}
+
+function CircularProgress({ value, max, label, icon: Icon, color }: { value: number; max: number; label: string; icon: ElementType; color: string }) {
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+  const circumference = 2 * Math.PI * 40;
+  const offset = circumference - (pct / 100) * circumference;
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-24 h-24">
+        <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+          <motion.circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className={`text-${color}`}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <Icon className={`w-5 h-5 text-${color} mb-0.5`} />
+          <span className="text-xl font-bold text-gray-800">{value}</span>
+        </div>
+      </div>
+      <p className="text-xs font-bold text-gray-500 mt-1">{label}</p>
+    </div>
+  );
 }
 
 export default function ProgressReport({
@@ -39,13 +74,6 @@ export default function ProgressReport({
 }: Props) {
   const config = DIFFICULTY_CONFIGS[ageGroup];
 
-  const statCards = [
-    { label: "Total Stars", value: stars, icon: Star, color: "kid-yellow", bg: "bg-kid-yellow/10" },
-    { label: "Tasks Done", value: tasksCompleted, icon: CheckCircle, color: "kid-green", bg: "bg-kid-green/10" },
-    { label: "Perfect Scores", value: perfectScores, icon: Target, color: "kid-orange", bg: "bg-kid-orange/10" },
-    { label: "Day Streak", value: streak, icon: Flame, color: "kid-pink", bg: "bg-kid-pink/10" },
-  ];
-
   const taskBreakdown = [
     { label: "Math", value: mathCompleted, emoji: "🔢", color: "kid-orange" },
     { label: "Reading", value: readingCompleted, emoji: "📚", color: "kid-green" },
@@ -53,6 +81,9 @@ export default function ProgressReport({
     { label: "Spelling", value: spellingCompleted, emoji: "📝", color: "kid-orange" },
     { label: "Logic", value: logicCompleted, emoji: "📁", color: "kid-purple" },
   ];
+
+  const maxTask = Math.max(mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, 1);
+  const achievementPct = Math.round((unlockedAchievements.length / ACHIEVEMENTS.length) * 100);
 
   return (
     <motion.div
@@ -78,62 +109,70 @@ export default function ProgressReport({
         </button>
       </div>
 
+      {/* Certificate-style Header */}
       <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        className="kid-card border-kid-purple w-full max-w-3xl"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="kid-card border-kid-purple w-full max-w-3xl relative overflow-hidden"
       >
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="text-4xl mb-2">{config.emoji}</div>
-          <h2 className="text-3xl font-bold text-kid-purple">Performance Review</h2>
-          <p className="text-gray-500 mt-1">
-            {playerName} • {config.label} • Age {ageGroup}
-          </p>
+        {/* Decorative border */}
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-kid-pink via-kid-purple to-kid-blue" />
+        <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-kid-blue via-kid-green to-kid-yellow" />
+
+        {/* Certificate Header */}
+        <div className="text-center pt-6 pb-4">
+          <motion.div
+            animate={{ rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 3, repeat: Infinity }}
+            className="text-5xl mb-2"
+          >
+            {config.emoji}
+          </motion.div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Official Performance Review</p>
+          <h2 className="text-3xl font-bold text-kid-purple">{playerName}&apos;s Report Card</h2>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-kid-purple/10 text-kid-purple">{config.label}</span>
+            <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-kid-blue/10 text-kid-blue">Age {ageGroup}</span>
+          </div>
         </div>
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          {statCards.map((stat, idx) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className={`${stat.bg} rounded-2xl p-4 text-center border-2 border-${stat.color}/30`}
-              >
-                <Icon className={`w-6 h-6 text-${stat.color} mx-auto mb-1`} />
-                <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                <p className="text-xs text-gray-500 font-bold">{stat.label}</p>
-              </motion.div>
-            );
-          })}
+        {/* Circular Progress Stats */}
+        <div className="flex justify-around items-center py-6 bg-gradient-to-b from-gray-50 to-white rounded-2xl mx-4 mb-6">
+          <CircularProgress value={stars} max={Math.max(stars, 50)} label="Stars" icon={Star} color="kid-yellow" />
+          <CircularProgress value={tasksCompleted} max={Math.max(tasksCompleted, 20)} label="Tasks" icon={CheckCircle} color="kid-green" />
+          <CircularProgress value={perfectScores} max={Math.max(perfectScores, 10)} label="Perfect" icon={Target} color="kid-orange" />
+          <CircularProgress value={streak} max={Math.max(streak, 7)} label="Streak" icon={Flame} color="kid-pink" />
         </div>
 
-        {/* Task Breakdown */}
-        <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-          <h3 className="font-bold text-gray-700 mb-3">Task Breakdown</h3>
+        {/* Task Breakdown - Visual Bars */}
+        <div className="mx-4 mb-6">
+          <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-kid-blue" />
+            Task Breakdown
+          </h3>
           <div className="space-y-3">
-            {taskBreakdown.map((task) => {
-              const maxVal = Math.max(mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, 1);
-              const pct = (task.value / maxVal) * 100;
+            {taskBreakdown.map((task, idx) => {
+              const pct = (task.value / maxTask) * 100;
               return (
                 <div key={task.label}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-bold text-gray-600">
-                      {task.emoji} {task.label}
+                    <span className="text-sm font-bold text-gray-600 flex items-center gap-1">
+                      <span className="text-lg">{task.emoji}</span>
+                      {task.label}
                     </span>
                     <span className="text-sm font-bold text-gray-700">{task.value}</span>
                   </div>
-                  <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                      className={`h-full bg-${task.color} rounded-full`}
-                    />
+                      transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.1 }}
+                      className={`h-full bg-${task.color} rounded-full flex items-center justify-end pr-2`}
+                    >
+                      {pct > 15 && (
+                        <span className="text-xs font-bold text-white">{Math.round(pct)}%</span>
+                      )}
+                    </motion.div>
                   </div>
                 </div>
               );
@@ -141,41 +180,73 @@ export default function ProgressReport({
           </div>
         </div>
 
-        {/* Stickers */}
-        <div className="bg-kid-yellow/10 rounded-2xl p-4 mb-6 text-center border-2 border-kid-yellow/30">
-          <p className="text-sm font-bold text-gray-600">
-            🎨 Stickers Collected: <span className="text-kid-orange font-bold">{stickersCount}</span>
-          </p>
+        {/* Sticker & Achievement Summary */}
+        <div className="mx-4 mb-6 grid grid-cols-2 gap-4">
+          {/* Stickers Card */}
+          <div className="bg-gradient-to-br from-kid-yellow/10 to-kid-orange/10 rounded-2xl p-4 text-center border-2 border-kid-yellow/30">
+            <div className="text-4xl mb-2">🎨</div>
+            <p className="text-3xl font-bold text-kid-orange">{stickersCount}</p>
+            <p className="text-xs font-bold text-gray-500">Stickers Collected!</p>
+          </div>
+
+          {/* Achievement Progress Card */}
+          <div className="bg-gradient-to-br from-kid-purple/10 to-kid-pink/10 rounded-2xl p-4 text-center border-2 border-kid-purple/30">
+            <div className="text-4xl mb-2">🏆</div>
+            <p className="text-3xl font-bold text-kid-purple">{unlockedAchievements.length}/{ACHIEVEMENTS.length}</p>
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${achievementPct}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="h-full bg-kid-purple rounded-full"
+              />
+            </div>
+            <p className="text-xs font-bold text-gray-500 mt-1">{achievementPct}% Unlocked!</p>
+          </div>
         </div>
 
-        {/* Achievements */}
-        <div className="mb-4">
+        {/* Achievements Grid */}
+        <div className="mx-4 mb-6">
           <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
             <Award className="w-5 h-5 text-kid-purple" />
-            Achievements ({unlockedAchievements.length}/{ACHIEVEMENTS.length})
+            Achievement Badges
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {ACHIEVEMENTS.map((badge) => {
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+            {ACHIEVEMENTS.map((badge: AchievementBadge, idx: number) => {
               const unlocked = unlockedAchievements.includes(badge.id);
               return (
-                <div
+                <motion.div
                   key={badge.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05 }}
                   className={`rounded-xl p-3 text-center border-2 transition-all ${
                     unlocked
-                      ? "bg-kid-purple/10 border-kid-purple/40"
+                      ? "bg-gradient-to-b from-kid-purple/10 to-kid-pink/10 border-kid-purple/40 shadow-md"
                       : "bg-gray-50 border-gray-200 opacity-50"
                   }`}
                 >
-                  <div className={`text-2xl mb-1 ${unlocked ? "" : "grayscale"}`}>
+                  <motion.div
+                    animate={unlocked ? { y: [0, -3, 0] } : {}}
+                    transition={{ duration: 2, repeat: Infinity, delay: idx * 0.1 }}
+                    className={`text-3xl mb-1 ${unlocked ? "" : "grayscale"}`}
+                  >
                     {unlocked ? badge.emoji : "🔒"}
-                  </div>
+                  </motion.div>
                   <p className={`text-xs font-bold ${unlocked ? "text-gray-700" : "text-gray-400"}`}>
                     {badge.name}
                   </p>
-                  <p className="text-xs text-gray-400">{badge.description}</p>
-                </div>
+                  <p className="text-xs text-gray-400 mt-0.5">{badge.description}</p>
+                </motion.div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center pb-6 mx-4">
+          <div className="border-t-2 border-dashed border-gray-200 pt-4">
+            <p className="text-xs text-gray-400">Keep up the great work, {playerName}! 🌟</p>
           </div>
         </div>
       </motion.div>

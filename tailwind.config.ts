@@ -14,6 +14,7 @@ const config: Config = {
       `border-${c}`,
       `hover:bg-${c}`,
       `hover:border-${c}`,
+      `hover:text-${c}`,
       `bg-${c}/10`,
       `bg-${c}/20`,
       `bg-${c}/30`,
@@ -22,6 +23,10 @@ const config: Config = {
       `border-${c}/30`,
       `border-${c}/40`,
       `text-${c}/30`,
+      `from-${c}/10`,
+      `to-${c}/10`,
+      `from-${c}`,
+      `to-${c}`,
     ]),
   ],
   theme: {

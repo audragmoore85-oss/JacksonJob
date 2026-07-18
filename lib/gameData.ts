@@ -10,10 +10,31 @@ export interface DifficultyConfig {
   emailConversations: EmailConversation[];
 }
 
+export interface MultipleChoiceQuestion {
+  type: "multipleChoice";
+  question: string;
+  options: string[];
+  answer: number;
+}
+
+export interface TrueFalseQuestion {
+  type: "trueFalse";
+  question: string;
+  answer: boolean;
+}
+
+export interface ClickPassageQuestion {
+  type: "clickPassage";
+  question: string;
+  sentenceIndex: number;
+}
+
+export type ReadingQuestion = MultipleChoiceQuestion | TrueFalseQuestion | ClickPassageQuestion;
+
 export interface ReadingPassage {
   title: string;
   text: string;
-  questions: { question: string; options: string[]; answer: number }[];
+  questions: ReadingQuestion[];
 }
 
 export interface EmailTemplate {
@@ -51,27 +72,30 @@ export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
         title: "The Happy Cat",
         text: "Cat has a red ball. Cat plays with the ball. Cat is happy! The ball is big and red. Cat runs with the ball all day.",
         questions: [
-          { question: "What color is the ball?", options: ["Blue", "Red", "Green"], answer: 1 },
-          { question: "How does Cat feel?", options: ["Sad", "Angry", "Happy"], answer: 2 },
-          { question: "What does Cat play with?", options: ["A ball", "A car", "A book"], answer: 0 },
+          { type: "multipleChoice", question: "What color is the ball?", options: ["Blue", "Red", "Green"], answer: 1 },
+          { type: "trueFalse", question: "Cat is sad.", answer: false },
+          { type: "clickPassage", question: "Click the sentence that tells how Cat feels!", sentenceIndex: 2 },
+          { type: "multipleChoice", question: "What does Cat play with?", options: ["A ball", "A car", "A book"], answer: 0 },
         ],
       },
       {
         title: "My Big Dog",
         text: "I have a big dog. My dog is brown. My dog likes to run. We run in the park. My dog is my best friend!",
         questions: [
-          { question: "What color is the dog?", options: ["Brown", "White", "Black"], answer: 0 },
-          { question: "Where do they run?", options: ["At home", "In the park", "At school"], answer: 1 },
-          { question: "What is the dog to the child?", options: ["A stranger", "A best friend", "A teacher"], answer: 1 },
+          { type: "multipleChoice", question: "What color is the dog?", options: ["Brown", "White", "Black"], answer: 0 },
+          { type: "trueFalse", question: "The dog likes to run.", answer: true },
+          { type: "clickPassage", question: "Click the sentence that says where they run!", sentenceIndex: 3 },
+          { type: "multipleChoice", question: "What is the dog to the child?", options: ["A stranger", "A best friend", "A teacher"], answer: 1 },
         ],
       },
       {
         title: "The Busy Bee",
         text: "Bee lives in a garden with many flowers. Bee visits red flowers and blue flowers. Bee makes honey from the flowers. Bee works hard every day. Bee is a good helper in the garden!",
         questions: [
-          { question: "Where does Bee live?", options: ["In a house", "In a garden", "In a tree"], answer: 1 },
-          { question: "What does Bee make?", options: ["Milk", "Honey", "Bread"], answer: 1 },
-          { question: "What color flowers does Bee visit?", options: ["Red and blue", "Green and yellow", "Pink and purple"], answer: 0 },
+          { type: "multipleChoice", question: "Where does Bee live?", options: ["In a house", "In a garden", "In a tree"], answer: 1 },
+          { type: "trueFalse", question: "Bee is lazy and does not work.", answer: false },
+          { type: "clickPassage", question: "Click the sentence that tells what Bee makes!", sentenceIndex: 2 },
+          { type: "multipleChoice", question: "What color flowers does Bee visit?", options: ["Red and blue", "Green and yellow", "Pink and purple"], answer: 0 },
         ],
       },
     ],
@@ -131,30 +155,33 @@ export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
         title: "The Treehouse Adventure",
         text: "Emma and Jake wanted to build a treehouse. They found a big oak tree in their backyard. Their dad helped them hammer the wood together. It took three days to finish. They painted it blue and added a small window. Now they play in it every weekend and invite their friends over for snacks and stories.",
         questions: [
-          { question: "What kind of tree did they find?", options: ["Pine tree", "Oak tree", "Maple tree"], answer: 1 },
-          { question: "How long did it take to build?", options: ["One day", "Two days", "Three days"], answer: 2 },
-          { question: "What color did they paint it?", options: ["Blue", "Green", "Red"], answer: 0 },
-          { question: "Who helped them build it?", options: ["Their mom", "Their dad", "Their teacher"], answer: 1 },
+          { type: "multipleChoice", question: "What kind of tree did they find?", options: ["Pine tree", "Oak tree", "Maple tree"], answer: 1 },
+          { type: "trueFalse", question: "It took one day to build the treehouse.", answer: false },
+          { type: "clickPassage", question: "Click the sentence that tells who helped them!", sentenceIndex: 2 },
+          { type: "multipleChoice", question: "What color did they paint it?", options: ["Blue", "Green", "Red"], answer: 0 },
+          { type: "multipleChoice", question: "Who helped them build it?", options: ["Their mom", "Their dad", "Their teacher"], answer: 1 },
         ],
       },
       {
         title: "The Science Fair",
         text: "Maria was excited about the science fair. She decided to make a volcano using baking soda and vinegar. She built a paper mache mountain and painted it to look real. On the day of the fair, she poured the vinegar in and the volcano erupted with bubbly foam! Everyone clapped and she won first place. Her teacher gave her a blue ribbon.",
         questions: [
-          { question: "What did Maria make for the science fair?", options: ["A robot", "A volcano", "A rocket"], answer: 1 },
-          { question: "What did she use to make the eruption?", options: ["Baking soda and vinegar", "Water and soap", "Sand and glue"], answer: 0 },
-          { question: "What place did she win?", options: ["Second place", "Third place", "First place"], answer: 2 },
-          { question: "What did her teacher give her?", options: ["A gold medal", "A blue ribbon", "A certificate"], answer: 1 },
+          { type: "multipleChoice", question: "What did Maria make for the science fair?", options: ["A robot", "A volcano", "A rocket"], answer: 1 },
+          { type: "trueFalse", question: "Maria won first place at the science fair.", answer: true },
+          { type: "clickPassage", question: "Click the sentence where the volcano erupts!", sentenceIndex: 3 },
+          { type: "multipleChoice", question: "What did she use to make the eruption?", options: ["Baking soda and vinegar", "Water and soap", "Sand and glue"], answer: 0 },
+          { type: "multipleChoice", question: "What did her teacher give her?", options: ["A gold medal", "A blue ribbon", "A certificate"], answer: 1 },
         ],
       },
       {
         title: "The Lost Puppy",
         text: "One rainy afternoon, Lily heard a small whimper outside her door. She opened it and found a wet, shivering puppy huddled on the porch. Lily brought the puppy inside and wrapped it in a warm towel. She gave it food and water. The puppy wagged its tail happily. Lily named the puppy Rain. Her parents said they could keep the puppy if Lily took care of it. Lily was thrilled and promised to feed, walk, and love Rain every single day.",
         questions: [
-          { question: "What was the weather like?", options: ["Sunny", "Rainy", "Snowy"], answer: 1 },
-          { question: "What did Lily name the puppy?", options: ["Sunny", "Rain", "Cloud"], answer: 1 },
-          { question: "What did Lily give the puppy first?", options: ["Food and water", "A toy", "A bath"], answer: 0 },
-          { question: "What did Lily promise to do?", options: ["Feed, walk, and love Rain", "Do her homework", "Clean her room"], answer: 0 },
+          { type: "multipleChoice", question: "What was the weather like?", options: ["Sunny", "Rainy", "Snowy"], answer: 1 },
+          { type: "trueFalse", question: "The puppy was dry and warm when Lily found it.", answer: false },
+          { type: "clickPassage", question: "Click the sentence where Lily names the puppy!", sentenceIndex: 5 },
+          { type: "multipleChoice", question: "What did Lily give the puppy first?", options: ["Food and water", "A toy", "A bath"], answer: 0 },
+          { type: "multipleChoice", question: "What did Lily promise to do?", options: ["Feed, walk, and love Rain", "Do her homework", "Clean her room"], answer: 0 },
         ],
       },
     ],
@@ -214,33 +241,36 @@ export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
         title: "The Underground Railroad",
         text: "The Underground Railroad was not actually a railroad underground. It was a secret network of people who helped enslaved individuals escape to freedom in the 1800s. Brave individuals called 'conductors' guided escaped individuals from safe house to safe house, often traveling at night to avoid detection. Harriet Tubman was one of the most famous conductors, making approximately thirteen missions to rescue around seventy people. The journey was dangerous and required tremendous courage from everyone involved.",
         questions: [
-          { question: "What was the Underground Railroad?", options: ["A real train underground", "A secret network helping people escape", "A mining tunnel system"], answer: 1 },
-          { question: "What were the guides called?", options: ["Drivers", "Conductors", "Pilots"], answer: 1 },
-          { question: "How many missions did Harriet Tubman make?", options: ["About 5", "About 13", "About 30"], answer: 1 },
-          { question: "When did the Underground Railroad operate?", options: ["The 1700s", "The 1800s", "The 1900s"], answer: 1 },
-          { question: "Why did they often travel at night?", options: ["It was cooler", "To avoid detection", "They preferred darkness"], answer: 1 },
+          { type: "multipleChoice", question: "What was the Underground Railroad?", options: ["A real train underground", "A secret network helping people escape", "A mining tunnel system"], answer: 1 },
+          { type: "trueFalse", question: "The Underground Railroad was a real train underground.", answer: false },
+          { type: "clickPassage", question: "Click the sentence that mentions Harriet Tubman!", sentenceIndex: 3 },
+          { type: "multipleChoice", question: "What were the guides called?", options: ["Drivers", "Conductors", "Pilots"], answer: 1 },
+          { type: "multipleChoice", question: "How many missions did Harriet Tubman make?", options: ["About 5", "About 13", "About 30"], answer: 1 },
+          { type: "multipleChoice", question: "Why did they often travel at night?", options: ["It was cooler", "To avoid detection", "They preferred darkness"], answer: 1 },
         ],
       },
       {
         title: "How Computers Work",
         text: "Computers process information using binary code, which consists of only two digits: 0 and 1. Every letter you type, every image you see, and every sound you hear on a computer is ultimately stored as a series of zeros and ones. The central processing unit, or CPU, acts as the brain of the computer, executing instructions at incredible speeds. Modern CPUs can perform billions of operations per second. Memory, or RAM, temporarily stores data that the CPU needs to access quickly, while storage drives like SSDs keep data permanently even when the computer is turned off.",
         questions: [
-          { question: "What two digits make up binary code?", options: ["1 and 2", "0 and 1", "0 and 9"], answer: 1 },
-          { question: "What acts as the brain of the computer?", options: ["The RAM", "The CPU", "The SSD"], answer: 1 },
-          { question: "What does RAM do?", options: ["Stores data permanently", "Temporarily stores data for quick access", "Displays images on screen"], answer: 1 },
-          { question: "How many operations can modern CPUs perform?", options: ["Millions per second", "Billions per second", "Thousands per second"], answer: 1 },
-          { question: "What keeps data when the computer is off?", options: ["RAM", "Storage drives (SSDs)", "The CPU"], answer: 1 },
+          { type: "multipleChoice", question: "What two digits make up binary code?", options: ["1 and 2", "0 and 1", "0 and 9"], answer: 1 },
+          { type: "trueFalse", question: "RAM keeps data permanently even when the computer is off.", answer: false },
+          { type: "clickPassage", question: "Click the sentence that describes what the CPU does!", sentenceIndex: 2 },
+          { type: "multipleChoice", question: "What acts as the brain of the computer?", options: ["The RAM", "The CPU", "The SSD"], answer: 1 },
+          { type: "multipleChoice", question: "How many operations can modern CPUs perform?", options: ["Millions per second", "Billions per second", "Thousands per second"], answer: 1 },
+          { type: "multipleChoice", question: "What keeps data when the computer is off?", options: ["RAM", "Storage drives (SSDs)", "The CPU"], answer: 1 },
         ],
       },
       {
         title: "The Solar System",
         text: "Our solar system has eight planets that orbit around the Sun. The four inner planets are Mercury, Venus, Earth, and Mars. These are rocky planets with solid surfaces. The four outer planets are Jupiter, Saturn, Uranus, and Neptune. These are gas giants made mostly of hydrogen and helium. Jupiter is the largest planet in our solar system, so massive that all the other planets could fit inside it. Saturn is famous for its beautiful rings made of ice and rock particles. Earth is the only planet known to have life, with oceans covering about seventy percent of its surface.",
         questions: [
-          { question: "How many planets are in our solar system?", options: ["Seven", "Eight", "Nine"], answer: 1 },
-          { question: "Which is the largest planet?", options: ["Earth", "Saturn", "Jupiter"], answer: 2 },
-          { question: "What are Saturn's rings made of?", options: ["Ice and rock particles", "Gas and dust", "Metal and glass"], answer: 0 },
-          { question: "What percentage of Earth is covered by oceans?", options: ["About 50%", "About 70%", "About 90%"], answer: 1 },
-          { question: "Which planet is known to have life?", options: ["Mars", "Earth", "Venus"], answer: 1 },
+          { type: "multipleChoice", question: "How many planets are in our solar system?", options: ["Seven", "Eight", "Nine"], answer: 1 },
+          { type: "trueFalse", question: "Jupiter is the largest planet in our solar system.", answer: true },
+          { type: "clickPassage", question: "Click the sentence about Saturn's rings!", sentenceIndex: 6 },
+          { type: "multipleChoice", question: "Which is the largest planet?", options: ["Earth", "Saturn", "Jupiter"], answer: 2 },
+          { type: "multipleChoice", question: "What percentage of Earth is covered by oceans?", options: ["About 50%", "About 70%", "About 90%"], answer: 1 },
+          { type: "multipleChoice", question: "Which planet is known to have life?", options: ["Mars", "Earth", "Venus"], answer: 1 },
         ],
       },
     ],
@@ -535,37 +565,77 @@ export const FILL_IN_BLANKS: Record<AgeGroup, FillInBlank[]> = {
 
 // ==================== LOGIC / PATTERN PUZZLES ====================
 
-export interface PatternPuzzle {
+export interface SequencePuzzle {
+  type: "sequence";
   sequence: (string | number)[];
   answer: string | number;
   options: (string | number)[];
-  type: "shape" | "number" | "color";
+  patternType: "shape" | "number" | "color";
 }
 
-export const PATTERN_PUZZLES: Record<AgeGroup, PatternPuzzle[]> = {
+export interface OddOneOutPuzzle {
+  type: "oddOneOut";
+  items: string[];
+  oddIndex: number;
+  reason: string;
+}
+
+export interface CategoryPuzzle {
+  type: "category";
+  item: string;
+  categories: { name: string; emoji: string }[];
+  correctCategory: number;
+}
+
+export interface SizeOrderPuzzle {
+  type: "sizeOrder";
+  items: { emoji: string; name: string; size: number }[];
+}
+
+export type LogicPuzzle = SequencePuzzle | OddOneOutPuzzle | CategoryPuzzle | SizeOrderPuzzle;
+
+export const LOGIC_PUZZLES: Record<AgeGroup, LogicPuzzle[]> = {
   "4-6": [
-    { sequence: ["🔴", "🔵", "🔴", "🔵", "🔴"], answer: "🔵", options: ["🔴", "🔵", "🟡"], type: "color" },
-    { sequence: ["⭐", "🌙", "⭐", "🌙", "⭐"], answer: "🌙", options: ["⭐", "🌙", "☀️"], type: "shape" },
-    { sequence: [1, 2, 3, 4, 5], answer: 6, options: [5, 6, 8], type: "number" },
-    { sequence: ["🍎", "🍌", "🍎", "🍌", "🍎"], answer: "🍌", options: ["🍎", "🍌", "🍇"], type: "shape" },
-    { sequence: [2, 4, 6, 8, 10], answer: 12, options: [11, 12, 13], type: "number" },
-    { sequence: ["🔺", "🔻", "🔺", "🔻", "🔺"], answer: "🔻", options: ["🔺", "🔻", "⭕"], type: "shape" },
+    { type: "sequence", sequence: ["🔴", "🔵", "🔴", "🔵", "🔴"], answer: "🔵", options: ["🔴", "🔵", "🟡"], patternType: "color" },
+    { type: "sequence", sequence: ["⭐", "🌙", "⭐", "🌙", "⭐"], answer: "🌙", options: ["⭐", "🌙", "☀️"], patternType: "shape" },
+    { type: "oddOneOut", items: ["🍎", "🍌", "🐶", "🍇"], oddIndex: 2, reason: "The dog is an animal, the others are fruits!" },
+    { type: "sequence", sequence: [1, 2, 3, 4, 5], answer: 6, options: [5, 6, 8], patternType: "number" },
+    { type: "category", item: "🍎", categories: [{ name: "Fruit", emoji: "🍎" }, { name: "Animal", emoji: "🐶" }, { name: "Toy", emoji: "🧸" }], correctCategory: 0 },
+    { type: "sizeOrder", items: [{ emoji: "🐜", name: "Ant", size: 1 }, { emoji: "🐱", name: "Cat", size: 2 }, { emoji: "🐘", name: "Elephant", size: 3 }] },
+    { type: "sequence", sequence: ["🍎", "🍌", "🍎", "🍌", "🍎"], answer: "🍌", options: ["🍎", "🍌", "🍇"], patternType: "shape" },
+    { type: "oddOneOut", items: ["🔴", "🔵", "🟢", "⭐"], oddIndex: 3, reason: "The star is a shape, the others are colors!" },
+    { type: "sequence", sequence: [2, 4, 6, 8, 10], answer: 12, options: [11, 12, 13], patternType: "number" },
+    { type: "category", item: "🐶", categories: [{ name: "Fruit", emoji: "🍎" }, { name: "Animal", emoji: "🐶" }, { name: "Vehicle", emoji: "🚗" }], correctCategory: 1 },
+    { type: "sequence", sequence: ["🔺", "🔻", "🔺", "🔻", "🔺"], answer: "🔻", options: ["🔺", "🔻", "⭕"], patternType: "shape" },
+    { type: "sizeOrder", items: [{ emoji: "🌱", name: "Seed", size: 1 }, { emoji: "🌿", name: "Sprout", size: 2 }, { emoji: "🌳", name: "Tree", size: 3 }] },
   ],
   "7-9": [
-    { sequence: [2, 4, 8, 16, 32], answer: 64, options: [48, 64, 80], type: "number" },
-    { sequence: [1, 1, 2, 3, 5, 8], answer: 13, options: [11, 13, 15], type: "number" },
-    { sequence: ["🔴", "🟡", "🟢", "🔴", "🟡"], answer: "🟢", options: ["🔴", "🟡", "🟢"], type: "color" },
-    { sequence: [3, 6, 9, 12, 15], answer: 18, options: [16, 17, 18], type: "number" },
-    { sequence: ["A", "B", "C", "A", "B"], answer: "C", options: ["A", "B", "C"], type: "shape" },
-    { sequence: [5, 10, 15, 20, 25], answer: 30, options: [28, 30, 35], type: "number" },
+    { type: "sequence", sequence: [2, 4, 8, 16, 32], answer: 64, options: [48, 64, 80], patternType: "number" },
+    { type: "oddOneOut", items: ["🚗", "🚙", "✈️", "🚚"], oddIndex: 2, reason: "The airplane flies, the others are ground vehicles!" },
+    { type: "sequence", sequence: [1, 1, 2, 3, 5, 8], answer: 13, options: [11, 13, 15], patternType: "number" },
+    { type: "category", item: "🦁", categories: [{ name: "Pet", emoji: "🏠" }, { name: "Wild Animal", emoji: "🌳" }, { name: "Bird", emoji: "🪶" }], correctCategory: 1 },
+    { type: "sequence", sequence: ["🔴", "🟡", "🟢", "🔴", "🟡"], answer: "🟢", options: ["🔴", "🟡", "🟢"], patternType: "color" },
+    { type: "sizeOrder", items: [{ emoji: "🪨", name: "Pebble", size: 1 }, { emoji: "🧱", name: "Brick", size: 2 }, { emoji: "⛰️", name: "Boulder", size: 3 }, { emoji: "🏔️", name: "Mountain", size: 4 }] },
+    { type: "sequence", sequence: [3, 6, 9, 12, 15], answer: 18, options: [16, 17, 18], patternType: "number" },
+    { type: "oddOneOut", items: ["☀️", "🌧️", "❄️", "🎸"], oddIndex: 3, reason: "The guitar is an instrument, the others are weather!" },
+    { type: "sequence", sequence: ["A", "B", "C", "A", "B"], answer: "C", options: ["A", "B", "C"], patternType: "shape" },
+    { type: "category", item: "🎹", categories: [{ name: "Tool", emoji: "🔧" }, { name: "Instrument", emoji: "🎵" }, { name: "Food", emoji: "🍔" }], correctCategory: 1 },
+    { type: "sequence", sequence: [5, 10, 15, 20, 25], answer: 30, options: [28, 30, 35], patternType: "number" },
+    { type: "sizeOrder", items: [{ emoji: "💧", name: "Drop", size: 1 }, { emoji: "🥤", name: "Cup", size: 2 }, { emoji: "🪣", name: "Bucket", size: 3 }, { emoji: "🏊", name: "Pool", size: 4 }] },
   ],
   "10-12": [
-    { sequence: [1, 4, 9, 16, 25], answer: 36, options: [30, 36, 42], type: "number" },
-    { sequence: [2, 6, 12, 20, 30], answer: 42, options: [36, 42, 48], type: "number" },
-    { sequence: [1, 1, 2, 3, 5, 8, 13], answer: 21, options: [18, 21, 24], type: "number" },
-    { sequence: [3, 9, 27, 81], answer: 243, options: [162, 243, 324], type: "number" },
-    { sequence: ["🔵", "🟢", "🟡", "🟠", "🔴", "🔵"], answer: "🟢", options: ["🔵", "🟢", "🟡"], type: "color" },
-    { sequence: [100, 90, 80, 70, 60], answer: 50, options: [45, 50, 55], type: "number" },
+    { type: "sequence", sequence: [1, 4, 9, 16, 25], answer: 36, options: [30, 36, 42], patternType: "number" },
+    { type: "oddOneOut", items: ["📖", "✏️", "📐", "🍕"], oddIndex: 3, reason: "Pizza is food, the others are school supplies!" },
+    { type: "sequence", sequence: [2, 6, 12, 20, 30], answer: 42, options: [36, 42, 48], patternType: "number" },
+    { type: "category", item: "🧬", categories: [{ name: "Art", emoji: "🎨" }, { name: "Science", emoji: "🔬" }, { name: "Sport", emoji: "⚽" }], correctCategory: 1 },
+    { type: "sequence", sequence: [1, 1, 2, 3, 5, 8, 13], answer: 21, options: [18, 21, 24], patternType: "number" },
+    { type: "sizeOrder", items: [{ emoji: "🦠", name: "Cell", size: 1 }, { emoji: "🐜", name: "Ant", size: 2 }, { emoji: "🐱", name: "Cat", size: 3 }, { emoji: "🐋", name: "Whale", size: 4 }, { emoji: "🌍", name: "Planet", size: 5 }] },
+    { type: "sequence", sequence: [3, 9, 27, 81], answer: 243, options: [162, 243, 324], patternType: "number" },
+    { type: "oddOneOut", items: [" Mercury", "Venus", "Moon", "Mars"], oddIndex: 2, reason: "The Moon is a moon, the others are planets!" },
+    { type: "sequence", sequence: ["🔵", "🟢", "🟡", "🟠", "🔴", "🔵"], answer: "🟢", options: ["🔵", "🟢", "🟡"], patternType: "color" },
+    { type: "category", item: "🏛️", categories: [{ name: "Nature", emoji: "🌿" }, { name: "Building", emoji: "🏗️" }, { name: "Vehicle", emoji: "🚗" }], correctCategory: 1 },
+    { type: "sequence", sequence: [100, 90, 80, 70, 60], answer: 50, options: [45, 50, 55], patternType: "number" },
+    { type: "sizeOrder", items: [{ emoji: "🤏", name: "Pinch", size: 1 }, { emoji: "✋", name: "Hand", size: 2 }, { emoji: "🧍", name: "Person", size: 3 }, { emoji: "🏠", name: "House", size: 4 }, { emoji: "🏙️", name: "City", size: 5 }] },
   ],
 };
 
