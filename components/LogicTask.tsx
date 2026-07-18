@@ -17,7 +17,6 @@ export default function LogicTask({ ageGroup, onComplete, onBack }: Props) {
   const puzzles = useMemo(() => PATTERN_PUZZLES[ageGroup], [ageGroup]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
-  const [attempts, setAttempts] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(-1);
@@ -30,11 +29,10 @@ export default function LogicTask({ ageGroup, onComplete, onBack }: Props) {
     const selected = currentPuzzle.options[idx];
     if (selected === currentPuzzle.answer) {
       setIsCorrect(true);
-      setCorrectCount((prev) => prev + 1);
+      setCorrectCount((prev: number) => prev + 1);
       playCorrect();
     } else {
       setIsCorrect(false);
-      setAttempts((prev) => prev + 1);
       playWrong();
     }
     setShowResult(true);
@@ -46,8 +44,7 @@ export default function LogicTask({ ageGroup, onComplete, onBack }: Props) {
     if (currentIdx + 1 < puzzles.length) {
       setCurrentIdx(currentIdx + 1);
     } else {
-      const lastCorrect = isCorrect ? 1 : 0;
-      const total = correctCount + lastCorrect;
+      const total = correctCount;
       const stars = total >= puzzles.length * 0.9 ? 3 : total >= puzzles.length * 0.6 ? 2 : 1;
       playClick();
       onComplete(stars);

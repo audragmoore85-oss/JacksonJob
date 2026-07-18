@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, RotateCcw, Star } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement, getTodayString, isDailyChallengeAvailable, calculateStreak, AchievementStats, ACHIEVEMENTS, AVATARS, getAvailableBossProject, getBossProjectThreshold, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
+import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement, getTodayString, isDailyChallengeAvailable, calculateStreak, AchievementStats, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, getAvailableBossProject, getBossProjectThreshold, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 import { playCelebrate, playClick } from "@/lib/sounds";
 import DeskScene from "@/components/DeskScene";
 import DifficultySelector from "@/components/DifficultySelector";
@@ -107,7 +107,7 @@ function saveProfile(profile: PlayerProfile) {
 function deleteProfile(name: string) {
   if (typeof window === "undefined") return;
   const profiles = loadProfiles();
-  delete profiles[name.toLowerCase()];
+  delete profiles[name.trim().toLowerCase()];
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
 }
 
@@ -183,7 +183,7 @@ export default function Home() {
   useEffect(() => {
     if (screen === "celebration" && pendingSticker) {
       const timer = setTimeout(() => {
-        setStickers((prev) => [...prev, pendingSticker]);
+        setStickers((prev: string[]) => [...prev, pendingSticker]);
         setPendingSticker(null);
       }, 1500);
       return () => clearTimeout(timer);
@@ -222,9 +222,11 @@ export default function Home() {
   };
 
   const handleStart = () => {
-    if (playerName.trim()) {
+    const trimmed = playerName.trim();
+    if (trimmed) {
+      setPlayerName(trimmed);
       playClick();
-      const key = playerName.trim().toLowerCase();
+      const key = trimmed.toLowerCase();
       const existing = savedProfiles[key];
       if (existing) {
         loadProfileData(existing);
@@ -243,28 +245,28 @@ export default function Home() {
   };
 
   const handleTaskComplete = (taskType: TaskType, earnedStarsCount: number) => {
-    setStars((prev) => prev + earnedStarsCount);
-    setTasksCompleted((prev) => prev + 1);
-    if (taskType === "math") setMathCompleted((prev) => prev + 1);
-    if (taskType === "reading") setReadingCompleted((prev) => prev + 1);
-    if (taskType === "typing") setTypingCompleted((prev) => prev + 1);
-    if (taskType === "spelling") setSpellingCompleted((prev) => prev + 1);
-    if (taskType === "logic") setLogicCompleted((prev) => prev + 1);
-    if (earnedStarsCount === 3) setPerfectScores((prev) => prev + 1);
+    setStars((prev: number) => prev + earnedStarsCount);
+    setTasksCompleted((prev: number) => prev + 1);
+    if (taskType === "math") setMathCompleted((prev: number) => prev + 1);
+    if (taskType === "reading") setReadingCompleted((prev: number) => prev + 1);
+    if (taskType === "typing") setTypingCompleted((prev: number) => prev + 1);
+    if (taskType === "spelling") setSpellingCompleted((prev: number) => prev + 1);
+    if (taskType === "logic") setLogicCompleted((prev: number) => prev + 1);
+    if (earnedStarsCount === 3) setPerfectScores((prev: number) => prev + 1);
 
-    if (isDailyChallenge && (taskType === "math" || taskType === "reading" || taskType === "typing")) {
-      setDailyChallengeProgress((prev) => [...prev, taskType]);
+    if (isDailyChallenge && (taskType === "math" || taskType === "reading" || taskType === "typing") && !dailyChallengeProgress.includes(taskType)) {
+      setDailyChallengeProgress((prev: string[]) => [...prev, taskType]);
     }
 
     if (activeBossProject && (taskType === "math" || taskType === "reading" || taskType === "typing") && !bossProjectProgress.includes(taskType)) {
       const newProgress = [...bossProjectProgress, taskType];
       setBossProjectProgress(newProgress);
       if (newProgress.length >= 3) {
-        const project = BOSS_PROJECTS.find((p) => p.id === activeBossProject);
+        const project = BOSS_PROJECTS.find((p: BossProjectData) => p.id === activeBossProject);
         if (project) {
-          setStars((prev) => prev + project.bonusStars);
-          setStickers((prev) => [...prev, project.bonusSticker]);
-          setBossProjectsDone((prev) => [...prev, project.id]);
+          setStars((prev: number) => prev + project.bonusStars);
+          setStickers((prev: string[]) => [...prev, project.bonusSticker]);
+          setBossProjectsDone((prev: string[]) => [...prev, project.id]);
           setActiveBossProject(null);
           setBossProjectProgress([]);
         }
@@ -290,7 +292,7 @@ export default function Home() {
       logicCompleted,
       perfectScores,
       streak,
-      stickersCollected: stickers.length,
+      stickersCollected: stickers.length + (pendingSticker ? 1 : 0),
     };
     const newlyUnlocked: string[] = [];
     ACHIEVEMENTS.forEach((badge) => {
@@ -298,16 +300,16 @@ export default function Home() {
         newlyUnlocked.push(badge.id);
       }
     });
+    setNewAchievements(newlyUnlocked);
     if (newlyUnlocked.length > 0) {
-      setUnlockedAchievements((prev) => [...prev, ...newlyUnlocked]);
-      setNewAchievements(newlyUnlocked);
+      setUnlockedAchievements((prev: string[]) => [...prev, ...newlyUnlocked]);
     }
   };
 
   const handleBuyDecoration = (decorationId: string, cost: number) => {
     if (stars >= cost && !decorations.includes(decorationId)) {
-      setStars((prev) => prev - cost);
-      setDecorations((prev) => [...prev, decorationId]);
+      setStars((prev: number) => prev - cost);
+      setDecorations((prev: string[]) => [...prev, decorationId]);
       playClick();
     }
   };
@@ -315,8 +317,11 @@ export default function Home() {
   const handleDailyChallengeComplete = () => {
     const today = getTodayString();
     setLastChallengeDate(today);
-    setStreak((prev) => prev + 1);
-    setStars((prev) => prev + 5);
+    setStreak((prev: number) => prev + 1);
+    setStars((prev: number) => prev + 5);
+    if (pendingSticker) {
+      setStickers((prev: string[]) => [...prev, pendingSticker]);
+    }
     setPendingSticker(getRandomSticker());
     setEncouragement("Daily Challenge Complete!");
     setEarnedStars(5);
@@ -336,7 +341,7 @@ export default function Home() {
   const handleBackToDesk = () => {
     playClick();
     if (pendingSticker) {
-      setStickers((prev) => [...prev, pendingSticker]);
+      setStickers((prev: string[]) => [...prev, pendingSticker]);
       setPendingSticker(null);
     }
     setScreen("desk");
@@ -376,6 +381,7 @@ export default function Home() {
     setShowPet(true);
     setShowCoffeeBreak(false);
     setSelectedAvatar(AVATARS[0].id);
+    setNewAchievements([]);
   };
 
   return (
@@ -410,9 +416,9 @@ export default function Home() {
                   👋 Welcome back! Pick your name:
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  {Object.values(savedProfiles).map((profile) => {
+                  {(Object.values(savedProfiles) as PlayerProfile[]).map((profile) => {
                     const pc = DIFFICULTY_CONFIGS[profile.ageGroup];
-                    const av = AVATARS.find((a) => a.id === profile.avatar) || AVATARS[0];
+                    const av = AVATARS.find((a: Avatar) => a.id === profile.avatar) || AVATARS[0];
                     return (
                       <motion.button
                         key={profile.playerName.toLowerCase()}
@@ -444,11 +450,11 @@ export default function Home() {
                   <div className="mt-4 bg-gradient-to-r from-kid-yellow/20 to-kid-orange/20 rounded-2xl p-3 border-2 border-kid-yellow/40">
                     <p className="text-sm font-bold text-kid-orange text-center mb-2">🏆 Leaderboard</p>
                     <div className="space-y-1">
-                      {Object.values(savedProfiles)
+                      {(Object.values(savedProfiles) as PlayerProfile[])
                         .sort((a, b) => b.stars - a.stars)
                         .slice(0, 5)
                         .map((profile, idx) => {
-                          const av = AVATARS.find((a) => a.id === profile.avatar) || AVATARS[0];
+                          const av = AVATARS.find((a: Avatar) => a.id === profile.avatar) || AVATARS[0];
                           const medals = ["🥇", "🥈", "🥉"];
                           return (
                             <div key={profile.playerName.toLowerCase()} className="flex items-center gap-2 bg-white/60 rounded-lg px-3 py-1">
@@ -519,7 +525,6 @@ export default function Home() {
             ageGroup={ageGroup}
             avatar={avatar}
             stars={stars}
-            stickers={stickers}
             tasksCompleted={tasksCompleted}
             decorations={decorations}
             streak={streak}
@@ -647,14 +652,16 @@ export default function Home() {
                   initial={{ scale: 0, y: 50 }}
                   animate={{ scale: 1, y: 0 }}
                   transition={{ delay: 0.8, type: "spring" }}
-                  className="text-6xl mb-4"
+                  className="text-6xl mb-2"
                 >
                   {pendingSticker}
                 </motion.div>
               )}
-              <p className="text-sm text-gray-500 mb-4">
-                A new sticker for your collection!
-              </p>
+              {pendingSticker && (
+                <p className="text-sm text-gray-500 mb-4">
+                  A new sticker for your collection!
+                </p>
+              )}
               {newAchievements.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -665,7 +672,7 @@ export default function Home() {
                   <p className="text-sm font-bold text-kid-purple mb-2">🏆 New Achievement Unlocked!</p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {newAchievements.map((aid) => {
-                      const badge = ACHIEVEMENTS.find((b) => b.id === aid);
+                      const badge = ACHIEVEMENTS.find((b: AchievementBadge) => b.id === aid);
                       return badge ? (
                         <div key={aid} className="flex items-center gap-1 bg-white rounded-lg px-2 py-1">
                           <span className="text-xl">{badge.emoji}</span>
@@ -725,7 +732,7 @@ export default function Home() {
         {screen === "boss" && activeBossProject && (
           <BossProjectScreen
             key="boss"
-            project={BOSS_PROJECTS.find((p) => p.id === activeBossProject)!}
+            project={BOSS_PROJECTS.find((p: BossProjectData) => p.id === activeBossProject)!}
             progress={bossProjectProgress}
             onBack={() => { setActiveBossProject(null); setBossProjectProgress([]); setScreen("desk"); }}
             onStartTask={(task) => setScreen(task)}

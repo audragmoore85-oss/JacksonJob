@@ -88,11 +88,13 @@ export default function TypingTask({ config, ageGroup, onComplete, onBack }: Pro
   const handleSend = () => {
     const isSecondEmail = phase === "compose2";
     const typed = isSecondEmail ? input2 : input;
+    if (!typed.trim()) return;
     const template = isSecondEmail ? conversation.userReplyTemplate : conversation.userTemplate;
     const errors = countErrors(typed, template);
 
+    const newTotal = totalAttempts + 1;
     setAttempts((prev: number) => prev + 1);
-    setTotalAttempts((prev: number) => prev + 1);
+    setTotalAttempts(newTotal);
     setShowErrors(true);
     setErrorCount(errors);
 
@@ -125,7 +127,7 @@ export default function TypingTask({ config, ageGroup, onComplete, onBack }: Pro
             ...prev,
             { from: "coworker", text: conversation.coworkerFinalReply },
           ]);
-          const stars = totalAttempts <= 1 ? 3 : totalAttempts <= 3 ? 2 : 1;
+          const stars = newTotal <= 2 ? 3 : newTotal <= 4 ? 2 : 1;
           setTimeout(() => onComplete(stars), 2500);
         }, 1000);
       }

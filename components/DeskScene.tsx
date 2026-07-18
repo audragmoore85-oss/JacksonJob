@@ -1,15 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, ACHIEVEMENTS, AVATARS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
+import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder } from "lucide-react";
+import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, DeskDecoration, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 
 interface Props {
   playerName: string;
   ageGroup: AgeGroup;
   avatar: string;
   stars: number;
-  stickers: string[];
   tasksCompleted: number;
   decorations: string[];
   streak: number;
@@ -36,7 +35,6 @@ export default function DeskScene({
   ageGroup,
   avatar,
   stars,
-  stickers,
   tasksCompleted,
   decorations,
   streak,
@@ -99,7 +97,7 @@ export default function DeskScene({
     {
       id: "logic" as const,
       label: "Filing Task",
-      icon: BookOpen,
+      icon: Folder,
       emoji: "📁",
       color: "kid-purple",
       bgColor: "bg-kid-purple",
@@ -107,11 +105,11 @@ export default function DeskScene({
     },
   ];
 
-  const avatarEmoji = AVATARS.find((a) => a.id === avatar)?.emoji || "🧑‍💼";
+  const avatarEmoji = AVATARS.find((a: Avatar) => a.id === avatar)?.emoji || "🧑‍💼";
   const seasonalTheme = getCurrentSeasonalTheme();
 
   const ownedDecorationEmojis = decorations
-    .map((id) => DESK_DECORATIONS.find((d) => d.id === id)?.emoji)
+    .map((id) => DESK_DECORATIONS.find((d: DeskDecoration) => d.id === id)?.emoji)
     .filter(Boolean);
 
   return (
@@ -250,7 +248,7 @@ export default function DeskScene({
           </div>
 
           {/* Daily Challenge Banner */}
-          {dailyAvailable && (
+          {dailyAvailable && dailyChallengeProgress.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -323,7 +321,7 @@ export default function DeskScene({
           {bossProjectsDone.length > 0 && (
             <div className="relative z-10 mb-4 flex justify-center gap-2">
               {bossProjectsDone.map((pid) => {
-                const proj = [{ id: "party", emoji: "🎉" }, { id: "report", emoji: "📊" }, { id: "hire", emoji: "🎓" }, { id: "launch", emoji: "🚀" }].find((p) => p.id === pid);
+                const proj = BOSS_PROJECTS.find((p: BossProjectData) => p.id === pid);
                 return (
                   <div key={pid} className="bg-white rounded-full px-3 py-1 shadow-md text-sm font-bold text-gray-700">
                     {proj?.emoji} Done!
@@ -447,7 +445,7 @@ export default function DeskScene({
             className="flex justify-center gap-2 mt-4 flex-wrap"
           >
             {unlockedAchievements.slice(-6).map((aid) => {
-              const badge = ACHIEVEMENTS.find((b) => b.id === aid);
+              const badge = ACHIEVEMENTS.find((b: AchievementBadge) => b.id === aid);
               return badge ? (
                 <motion.div
                   key={aid}

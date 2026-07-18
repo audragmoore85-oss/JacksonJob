@@ -439,7 +439,11 @@ export const ACHIEVEMENTS: AchievementBadge[] = [
 ];
 
 export function getTodayString(): string {
-  return new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function isDailyChallengeAvailable(lastChallengeDate: string | null): boolean {
@@ -451,7 +455,9 @@ export function isDailyChallengeAvailable(lastChallengeDate: string | null): boo
 export function calculateStreak(lastChallengeDate: string | null, streak: number): number {
   if (!lastChallengeDate) return 0;
   const today = getTodayString();
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, "0")}-${String(yesterdayDate.getDate()).padStart(2, "0")}`;
   if (lastChallengeDate === today) return streak;
   if (lastChallengeDate === yesterday) return streak;
   return 0;
@@ -499,7 +505,7 @@ export const SPELLING_WORDS: Record<AgeGroup, SpellingWord[]> = {
     { word: "science", scrambled: "ceinsce", hint: "The study of the natural world", definition: "The systematic study of the natural world" },
     { word: "adventure", scrambled: "vntraeued", hint: "An exciting journey", definition: "An exciting or unusual experience" },
     { word: "knowledge", scrambled: "ekngldowe", hint: "What you gain from learning", definition: "Information and skills acquired through experience" },
-    { word: "important", scrambled: "imnprttto", hint: "Something that matters a lot", definition: "Of great significance or value" },
+    { word: "important", scrambled: "imnorttap", hint: "Something that matters a lot", definition: "Of great significance or value" },
     { word: "discover", scrambled: "sdcoiver", hint: "To find something new", definition: "To find something for the first time" },
     { word: "creative", scrambled: "ceravite", hint: "Using your imagination", definition: "Having the ability to make new things" },
     { word: "language", scrambled: "lagugane", hint: "Words we use to communicate", definition: "A system of communication using words" },
@@ -565,7 +571,13 @@ export const PATTERN_PUZZLES: Record<AgeGroup, PatternPuzzle[]> = {
 
 // ==================== AVATARS ====================
 
-export const AVATARS = [
+export interface Avatar {
+  id: string;
+  emoji: string;
+  name: string;
+}
+
+export const AVATARS: Avatar[] = [
   { id: "worker1", emoji: "🧑‍💻", name: "Tech Worker" },
   { id: "worker2", emoji: "👩‍💼", name: "Business Woman" },
   { id: "worker3", emoji: "🧑‍🔬", name: "Scientist" },

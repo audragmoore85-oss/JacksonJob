@@ -32,7 +32,7 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
 
     const isCorrect = optionIdx === passage.questions[currentQuestion].answer;
     if (isCorrect) {
-      setCorrectCount((prev) => prev + 1);
+      setCorrectCount((prev: number) => prev + 1);
       setEncouragement(getRandomEncouragement());
       playCorrect();
       confetti({
@@ -53,7 +53,7 @@ export default function ReadingTask({ config, onComplete, onBack }: Props) {
         const stars = total >= passage.questions.length ? 3 : total >= Math.ceil(passage.questions.length / 2) ? 2 : 1;
         onComplete(stars);
       } else {
-        setCurrentQuestion((prev) => prev + 1);
+        setCurrentQuestion((prev: number) => prev + 1);
         setSelected(null);
         setShowResult(false);
         setShowHint(false);

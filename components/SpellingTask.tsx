@@ -19,7 +19,6 @@ export default function SpellingTask({ ageGroup, onComplete, onBack }: Props) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [input, setInput] = useState("");
   const [showHint, setShowHint] = useState(false);
-  const [attempts, setAttempts] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -35,12 +34,11 @@ export default function SpellingTask({ ageGroup, onComplete, onBack }: Props) {
     if (input.trim().toLowerCase() === currentWord.word.toLowerCase()) {
       setIsCorrect(true);
       setShowResult(true);
-      setCorrectCount((prev) => prev + 1);
+      setCorrectCount((prev: number) => prev + 1);
       playCorrect();
     } else {
       setIsCorrect(false);
       setShowResult(true);
-      setAttempts((prev) => prev + 1);
       playWrong();
     }
   };
@@ -49,12 +47,11 @@ export default function SpellingTask({ ageGroup, onComplete, onBack }: Props) {
     if (idx === currentBlank.answer) {
       setIsCorrect(true);
       setShowResult(true);
-      setFillBlankCorrect((prev) => prev + 1);
+      setFillBlankCorrect((prev: number) => prev + 1);
       playCorrect();
     } else {
       setIsCorrect(false);
       setShowResult(true);
-      setAttempts((prev) => prev + 1);
       playWrong();
     }
   };
@@ -75,8 +72,7 @@ export default function SpellingTask({ ageGroup, onComplete, onBack }: Props) {
         setFillBlankIdx(fillBlankIdx + 1);
       } else {
         setPhase("done");
-        const lastCorrect = isCorrect ? 1 : 0;
-        const totalCorrect = correctCount + fillBlankCorrect + lastCorrect;
+        const totalCorrect = correctCount + fillBlankCorrect;
         const stars = totalCorrect >= totalRounds * 0.9 ? 3 : totalCorrect >= totalRounds * 0.6 ? 2 : 1;
         playClick();
         onComplete(stars);

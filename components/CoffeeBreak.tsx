@@ -17,7 +17,7 @@ export default function CoffeeBreak({ onComplete }: Props) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft((prev: number) => {
         if (prev <= 1) {
           clearInterval(interval);
           return 0;
@@ -43,7 +43,7 @@ export default function CoffeeBreak({ onComplete }: Props) {
 
   const handleClick = (itemId: string) => {
     if (itemId === targetItem.id) {
-      setCollected((prev) => [...prev, itemId]);
+      setCollected((prev: string[]) => [...prev, itemId]);
       playPop();
     } else {
       playClick();

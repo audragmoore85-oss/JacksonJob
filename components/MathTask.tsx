@@ -32,7 +32,7 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
     setShowResult(true);
 
     if (option === problem.answer) {
-      setCorrectCount((prev) => prev + 1);
+      setCorrectCount((prev: number) => prev + 1);
       setEncouragement(getRandomEncouragement());
       playCorrect();
       confetti({
@@ -56,7 +56,7 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
           : 1;
         onComplete(stars);
       } else {
-        setQuestionNum((prev) => prev + 1);
+        setQuestionNum((prev: number) => prev + 1);
         setProblem(generateMathProblem(config));
         setSelected(null);
         setShowResult(false);
@@ -98,7 +98,7 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
           ))}
           {!showResult && (
             <button
-              onClick={() => { setShowHint(!showHint); if (!showHint) setHintsUsed((prev) => prev + 1); }}
+              onClick={() => { setShowHint(!showHint); if (!showHint) setHintsUsed((prev: number) => prev + 1); }}
               className={`ml-2 px-3 py-1 rounded-full text-xs font-bold transition-all ${
                 showHint ? "bg-kid-yellow text-gray-800" : "bg-white text-kid-yellow border-2 border-kid-yellow/30"
               }`}
