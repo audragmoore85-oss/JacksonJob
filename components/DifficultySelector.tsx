@@ -20,6 +20,7 @@ export default function DifficultySelector({ playerName, onSelect, selectedAvata
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -100 }}
       className="min-h-screen flex flex-col items-center justify-center p-6"
+      style={{ background: "linear-gradient(135deg, #FFF8E7 0%, #E8F4FD 100%)" }}
     >
       <motion.h2
         initial={{ y: -20, opacity: 0 }}

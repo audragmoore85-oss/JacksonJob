@@ -11,7 +11,7 @@
 }
 
 body {
-  background: linear-gradient(135deg, #FFF8E7 0%, #E8F4FD 100%);
+  background: transparent;
   font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif;
   overflow-x: hidden;
 }

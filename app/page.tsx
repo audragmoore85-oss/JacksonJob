@@ -468,6 +468,7 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             className="min-h-screen flex flex-col items-center justify-center p-6"
+            style={{ background: "linear-gradient(135deg, #FFF8E7 0%, #E8F4FD 100%)" }}
           >
             <motion.div
               animate={{ y: [0, -15, 0] }}
