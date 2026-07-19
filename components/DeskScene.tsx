@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder, PenTool, Timer, Volume2 } from "lucide-react";
+import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder, PenTool, Timer } from "lucide-react";
 import Tooltip from "@/components/Tooltip";
 import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, DeskDecoration, DESK_THEMES, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 
@@ -207,23 +207,6 @@ export default function DeskScene({
               className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
             >
               <Coffee className="w-5 h-5 text-kid-orange" />
-            </button>
-          </Tooltip>
-          <Tooltip text="Say 'Audra'" side="bottom">
-            <button
-              onClick={() => {
-                if (typeof window !== "undefined" && "speechSynthesis" in window) {
-                  const utterance = new SpeechSynthesisUtterance("Audra");
-                  utterance.rate = 0.9;
-                  utterance.pitch = 1.1;
-                  window.speechSynthesis.cancel();
-                  window.speechSynthesis.speak(utterance);
-                }
-              }}
-              className="flex items-center gap-1 bg-gradient-to-r from-kid-green to-kid-blue text-white rounded-full px-3 py-2 shadow-md hover:scale-110 transition-transform"
-            >
-              <Volume2 className="w-5 h-5" />
-              <span className="font-bold text-sm hidden sm:inline">Audra</span>
             </button>
           </Tooltip>
           <Tooltip text={`You have ${stars} stars!`} side="bottom">

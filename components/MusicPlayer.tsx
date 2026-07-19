@@ -2,202 +2,155 @@
 
 import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Music, Volume2, VolumeX, ChevronUp, ChevronDown } from "lucide-react";
-
-type OscType = "sine" | "square" | "triangle" | "sawtooth";
+import { Music, Volume2, VolumeX, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 
 interface Track {
   name: string;
   emoji: string;
-  notes: number[];
-  tempo: number;
-  loop: number;
-  oscType: OscType;
-  harmony: number[];
-  attack: number;
-  release: number;
-  bass: number[] | null;
+  url: string;
+  artist: string;
 }
 
 const TRACKS: Track[] = [
   {
-    name: "Space Adventure",
+    name: "Call to Adventure",
     emoji: "🚀",
-    tempo: 400,
-    loop: 8,
-    notes: [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 261.63, 196.00],
-    oscType: "sawtooth",
-    harmony: [1.5, 2.0],
-    attack: 0.02,
-    release: 0.85,
-    bass: [65.41, 65.41, 98.00, 98.00],
+    url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/2013/Kevin_MacLeod_-_Call_to_Adventure.mp3",
+    artist: "Kevin MacLeod (CC-BY 3.0)",
   },
   {
-    name: "Happy Vibes",
+    name: "Monkeys Spinning Monkeys",
     emoji: "🌈",
-    tempo: 350,
-    loop: 8,
-    notes: [293.66, 349.23, 440.00, 523.25, 440.00, 349.23, 293.66, 261.63],
-    oscType: "triangle",
-    harmony: [1.25, 1.5],
-    attack: 0.01,
-    release: 0.8,
-    bass: [73.42, 73.42, 87.31, 87.31],
+    url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Best_of_2014/Kevin_MacLeod_-_Monkeys_Spinning_Monkeys.mp3",
+    artist: "Kevin MacLeod (CC-BY 3.0)",
   },
   {
-    name: "Chill Beats",
+    name: "Carefree",
     emoji: "🎧",
-    tempo: 500,
-    loop: 6,
-    notes: [220.00, 261.63, 329.63, 261.63, 220.00, 196.00],
-    oscType: "sine",
-    harmony: [1.5],
-    attack: 0.08,
-    release: 0.95,
-    bass: [55.00, 55.00, 65.41, 65.41],
+    url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Calming/Kevin_MacLeod_-_Carefree.mp3",
+    artist: "Kevin MacLeod (CC-BY 3.0)",
   },
   {
-    name: "Cosmic Jazz",
+    name: "Beach Party",
+    emoji: "�️",
+    url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Global_Sampler/Kevin_MacLeod_-_Beach_Party.mp3",
+    artist: "Kevin MacLeod (CC-BY 3.0)",
+  },
+  {
+    name: "Time",
     emoji: "🎷",
-    tempo: 300,
-    loop: 10,
-    notes: [349.23, 440.00, 523.25, 466.16, 392.00, 349.23, 311.13, 349.23, 440.00, 523.25],
-    oscType: "square",
-    harmony: [1.5],
-    attack: 0.03,
-    release: 0.7,
-    bass: [87.31, 87.31, 116.54, 116.54],
+    url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Komiku/Its_time_for_adventure__vol_2/Komiku_-_04_-_Time.mp3",
+    artist: "Komiku (CC0)",
   },
   {
-    name: "Magic Forest",
+    name: "Tale on the Late",
     emoji: "🌿",
-    tempo: 450,
-    loop: 7,
-    notes: [392.00, 440.00, 523.25, 587.33, 523.25, 440.00, 392.00],
-    oscType: "triangle",
-    harmony: [1.25, 1.5, 2.0],
-    attack: 0.05,
-    release: 0.9,
-    bass: [98.00, 98.00, 130.81, 130.81],
+    url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/Music_for_Video/Komiku/Tale_on_the_Late/Komiku_-_01_-_Tale_on_the_Late_Main_Theme.mp3",
+    artist: "Komiku (CC0)",
   },
 ];
 
 export default function MusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
-  const [volume, setVolume] = useState(0.15);
+  const [volume, setVolume] = useState(0.3);
   const [expanded, setExpanded] = useState(false);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const oscillatorsRef = useRef<OscillatorNode[]>([]);
-  const gainRef = useRef<GainNode | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const noteIdxRef = useRef(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const stopMusic = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    oscillatorsRef.current.forEach((osc) => {
-      try { osc.stop(); } catch {}
-    });
-    oscillatorsRef.current = [];
-    if (gainRef.current) {
-      gainRef.current.disconnect();
-      gainRef.current = null;
-    }
-    if (audioCtxRef.current) {
-      audioCtxRef.current.close();
-      audioCtxRef.current = null;
-    }
-  };
+  useEffect(() => {
+    const audio = new Audio();
+    audio.loop = true;
+    audio.volume = volume;
+    audioRef.current = audio;
 
-  const playTrack = (trackIdx: number) => {
-    stopMusic();
-    const track = TRACKS[trackIdx];
-
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new AudioCtx();
-    audioCtxRef.current = ctx;
-
-    const gainNode = ctx.createGain();
-    gainNode.gain.value = volume;
-    gainNode.connect(ctx.destination);
-    gainRef.current = gainNode;
-
-    noteIdxRef.current = 0;
-
-    const playNote = () => {
-      if (!audioCtxRef.current || !gainRef.current) return;
-
-      const freq = track.notes[noteIdxRef.current % track.notes.length];
-      const now = audioCtxRef.current.currentTime;
-      const noteDur = track.tempo / 1000;
-
-      const createOsc = (frequency: number, type: OscType, peak: number, delay: number) => {
-        const osc = audioCtxRef.current!.createOscillator();
-      const g = audioCtxRef.current!.createGain();
-      osc.type = type;
-      osc.frequency.value = frequency;
-      g.gain.setValueAtTime(0, now + delay);
-      g.gain.linearRampToValueAtTime(peak, now + delay + track.attack);
-      g.gain.linearRampToValueAtTime(0, now + delay + noteDur * track.release);
-      osc.connect(g);
-      g.connect(gainRef.current!);
-      osc.start(now + delay);
-      osc.stop(now + delay + noteDur);
-      oscillatorsRef.current.push(osc);
-      };
-
-      createOsc(freq, track.oscType, 0.6, 0);
-      track.harmony.forEach((mult, i) => {
-        createOsc(freq * mult, track.oscType, 0.25 / (i + 1), 0);
-      });
-
-      if (track.bass) {
-        const bassFreq = track.bass[noteIdxRef.current % track.bass.length];
-        createOsc(bassFreq, "sine", 0.4, 0);
+    const handleCanPlay = () => {
+      setIsLoading(false);
+      setLoadError(false);
+      if (isPlaying) {
+        audio.play().catch(() => {
+          setIsPlaying(false);
+          setLoadError(true);
+        });
       }
-
-      oscillatorsRef.current = oscillatorsRef.current.filter((o: OscillatorNode) => {
-        try { return o.context.state !== "closed"; } catch { return false; }
-      });
-
-      noteIdxRef.current++;
     };
 
-    playNote();
-    intervalRef.current = setInterval(playNote, track.tempo);
-  };
+    const handleWaiting = () => setIsLoading(true);
+    const handlePlaying = () => setIsLoading(false);
+    const handleError = () => {
+      setIsLoading(false);
+      setLoadError(true);
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("waiting", handleWaiting);
+    audio.addEventListener("playing", handlePlaying);
+    audio.addEventListener("error", handleError);
+
+    return () => {
+      audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("waiting", handleWaiting);
+      audio.removeEventListener("playing", handlePlaying);
+      audio.removeEventListener("error", handleError);
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (audio.src !== TRACKS[currentTrack].url) {
+      setIsLoading(true);
+      setLoadError(false);
+      audio.src = TRACKS[currentTrack].url;
+      audio.load();
+      if (isPlaying) {
+        audio.play().catch(() => {
+          setLoadError(true);
+          setIsLoading(false);
+          setIsPlaying(false);
+        });
+      }
+    }
+  }, [currentTrack]);
 
   const handlePlayPause = () => {
+    if (!audioRef.current) return;
     if (isPlaying) {
-      stopMusic();
+      audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      playTrack(currentTrack);
-      setIsPlaying(true);
+      if (!audioRef.current.src) {
+        setIsLoading(true);
+        setLoadError(false);
+        audioRef.current.src = TRACKS[currentTrack].url;
+        audioRef.current.load();
+      }
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+        setLoadError(false);
+      }).catch(() => {
+        setLoadError(true);
+        setIsLoading(false);
+        setIsPlaying(false);
+      });
     }
   };
 
   const handleTrackChange = (idx: number) => {
     setCurrentTrack(idx);
-    if (isPlaying) {
-      playTrack(idx);
-    }
   };
 
   const handleVolumeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newVol = parseFloat(e.target.value);
     setVolume(newVol);
-    if (gainRef.current) {
-      gainRef.current.gain.value = newVol;
+    if (audioRef.current) {
+      audioRef.current.volume = newVol;
     }
   };
-
-  useEffect(() => {
-    return () => stopMusic();
-  }, []);
 
   return (
     <motion.div
@@ -213,12 +166,20 @@ export default function MusicPlayer() {
             className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
             title={isPlaying ? "Pause music" : "Play music"}
           >
-            {isPlaying ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : isPlaying ? (
+              <Volume2 className="w-5 h-5" />
+            ) : (
+              <VolumeX className="w-5 h-5" />
+            )}
           </button>
 
           <div className="text-white text-sm font-bold flex items-center gap-1 min-w-0">
             <span className="text-lg">{TRACKS[currentTrack].emoji}</span>
-            <span className="hidden sm:inline truncate">{isPlaying ? TRACKS[currentTrack].name : "Music Off"}</span>
+            <span className="hidden sm:inline truncate">
+              {loadError ? "Failed to load" : isLoading ? "Loading..." : isPlaying ? TRACKS[currentTrack].name : "Music Off"}
+            </span>
           </div>
 
           <button
@@ -254,7 +215,10 @@ export default function MusicPlayer() {
                     }`}
                   >
                     <span className="text-lg">{track.emoji}</span>
-                    <span>{track.name}</span>
+                    <div className="flex flex-col items-start min-w-0">
+                      <span className="truncate">{track.name}</span>
+                      <span className="text-[10px] text-white/40 truncate">{track.artist}</span>
+                    </div>
                     {currentTrack === idx && isPlaying && (
                       <motion.div
                         animate={{ scale: [1, 1.3, 1] }}
@@ -275,13 +239,19 @@ export default function MusicPlayer() {
                   <input
                     type="range"
                     min="0"
-                    max="0.5"
+                    max="1"
                     step="0.05"
                     value={volume}
                     onChange={handleVolumeChange}
                     className="w-full accent-purple-400"
                   />
                 </div>
+
+                {loadError && (
+                  <div className="text-red-300 text-xs text-center pt-1">
+                    Could not load audio. Check your connection.
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
