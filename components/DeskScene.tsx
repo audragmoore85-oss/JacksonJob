@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder, PenTool, Timer } from "lucide-react";
+import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder, PenTool, Timer, Gamepad, Brain, GraduationCap, Sparkles } from "lucide-react";
 import Tooltip from "@/components/Tooltip";
 import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, DeskDecoration, DESK_THEMES, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 
@@ -30,6 +30,10 @@ interface Props {
   onCoffeeBreak: () => void;
   onTogglePet: () => void;
   onStartTimer: () => void;
+  onStartWordMatch: () => void;
+  onStartMemoryMatch: () => void;
+  onStartDailyQuiz: () => void;
+  onEasterEggFound: (eggId: string) => void;
   onReset: () => void;
 }
 
@@ -58,6 +62,10 @@ export default function DeskScene({
   onCoffeeBreak,
   onTogglePet,
   onStartTimer,
+  onStartWordMatch,
+  onStartMemoryMatch,
+  onStartDailyQuiz,
+  onEasterEggFound,
   onReset,
 }: Props) {
   const config = DIFFICULTY_CONFIGS[ageGroup];
@@ -201,6 +209,36 @@ export default function DeskScene({
               <Timer className="w-5 h-5 text-kid-pink" />
             </button>
           </Tooltip>
+          <Tooltip text="Word Match" side="bottom">
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onStartWordMatch}
+              className="flex items-center gap-1 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full p-2 shadow-md transition-transform"
+            >
+              <Gamepad className="w-5 h-5 text-kid-blue" />
+            </motion.button>
+          </Tooltip>
+          <Tooltip text="Memory Match" side="bottom">
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onStartMemoryMatch}
+              className="flex items-center gap-1 bg-gradient-to-br from-green-100 to-green-200 rounded-full p-2 shadow-md transition-transform"
+            >
+              <Brain className="w-5 h-5 text-kid-green" />
+            </motion.button>
+          </Tooltip>
+          <Tooltip text="Daily Quiz" side="bottom">
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onStartDailyQuiz}
+              className="flex items-center gap-1 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full p-2 shadow-md transition-transform"
+            >
+              <GraduationCap className="w-5 h-5 text-kid-orange" />
+            </motion.button>
+          </Tooltip>
           <Tooltip text="Coffee Break" side="bottom">
             <button
               onClick={onCoffeeBreak}
@@ -210,10 +248,14 @@ export default function DeskScene({
             </button>
           </Tooltip>
           <Tooltip text={`You have ${stars} stars!`} side="bottom">
-          <div className="flex items-center gap-1 bg-white rounded-full px-4 py-2 shadow-md">
+          <motion.div
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="flex items-center gap-1 bg-white rounded-full px-4 py-2 shadow-md"
+          >
             <Star className="w-5 h-5 fill-kid-yellow text-kid-yellow" />
             <span className="font-bold text-gray-700">{stars}</span>
-          </div>
+          </motion.div>
           </Tooltip>
           <Tooltip text="Start Over" side="bottom">
             <button
@@ -272,6 +314,38 @@ export default function DeskScene({
             <span className="font-bold text-gray-800 text-lg">{playerName}</span>
             <p className="text-xs text-gray-600">{config.label}</p>
           </motion.div>
+
+          {/* Easter Eggs - hidden clickable surprises */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.15, 0] }}
+            transition={{ duration: 3, repeat: Infinity, delay: 5 }}
+            onClick={() => onEasterEggFound("hidden_star")}
+            className="absolute top-2 right-2 text-lg hover:scale-150 transition-transform"
+            title="?"
+          >
+            <Sparkles className="w-4 h-4 text-yellow-300/30" />
+          </motion.button>
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.15, 0] }}
+            transition={{ duration: 4, repeat: Infinity, delay: 12 }}
+            onClick={() => onEasterEggFound("lucky_clover")}
+            className="absolute bottom-2 left-4 text-lg hover:scale-150 transition-transform"
+            title="?"
+          >
+            <Sparkles className="w-3 h-3 text-green-300/30" />
+          </motion.button>
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.15, 0] }}
+            transition={{ duration: 5, repeat: Infinity, delay: 20 }}
+            onClick={() => onEasterEggFound("magic_wand")}
+            className="absolute top-1/2 right-12 text-lg hover:scale-150 transition-transform"
+            title="?"
+          >
+            <Sparkles className="w-3 h-3 text-purple-300/30" />
+          </motion.button>
         </div>
 
         {/* Desk Surface */}
@@ -451,9 +525,19 @@ export default function DeskScene({
             <motion.div
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 4, repeat: Infinity }}
-              className="text-4xl"
+              className="text-4xl relative"
             >
               {decorations.includes("plant") ? "🪴" : "📎"}
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.12, 0] }}
+                transition={{ duration: 3, repeat: Infinity, delay: 8 }}
+                onClick={() => onEasterEggFound("secret_treasure")}
+                className="absolute -top-2 -right-2"
+                title="?"
+              >
+                <Sparkles className="w-3 h-3 text-purple-300/30" />
+              </motion.button>
             </motion.div>
           </div>
         </div>

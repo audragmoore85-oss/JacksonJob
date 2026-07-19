@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { ElementType } from "react";
-import { ArrowLeft, Star, Printer, Award, Flame, Target, CheckCircle, TrendingUp } from "lucide-react";
+import { ArrowLeft, Star, Printer, Award, Flame, Target, CheckCircle, TrendingUp, Sparkles } from "lucide-react";
 import { AgeGroup, DIFFICULTY_CONFIGS, ACHIEVEMENTS, AchievementBadge } from "@/lib/gameData";
 
 interface Props {
@@ -17,6 +17,10 @@ interface Props {
   logicCompleted: number;
   writingCompleted: number;
   quickCompleted: number;
+  wordMatchCompleted: number;
+  memoryMatchCompleted: number;
+  dailyQuizCompleted: number;
+  easterEggsFound: number;
   perfectScores: number;
   streak: number;
   stickersCount: number;
@@ -70,6 +74,10 @@ export default function ProgressReport({
   logicCompleted,
   writingCompleted,
   quickCompleted,
+  wordMatchCompleted,
+  memoryMatchCompleted,
+  dailyQuizCompleted,
+  easterEggsFound,
   perfectScores,
   streak,
   stickersCount,
@@ -86,9 +94,12 @@ export default function ProgressReport({
     { label: "Logic", value: logicCompleted, emoji: "📁", color: "kid-purple" },
     { label: "Writing", value: writingCompleted, emoji: "✍️", color: "kid-pink" },
     { label: "Quick Tasks", value: quickCompleted, emoji: "⚡", color: "kid-pink" },
+    { label: "Word Match", value: wordMatchCompleted, emoji: "🔤", color: "kid-blue" },
+    { label: "Memory Match", value: memoryMatchCompleted, emoji: "🧠", color: "kid-green" },
+    { label: "Daily Quiz", value: dailyQuizCompleted, emoji: "🎓", color: "kid-orange" },
   ];
 
-  const maxTask = Math.max(mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, quickCompleted, 1);
+  const maxTask = Math.max(mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, quickCompleted, wordMatchCompleted, memoryMatchCompleted, dailyQuizCompleted, 1);
   const achievementPct = Math.round((unlockedAchievements.length / ACHIEVEMENTS.length) * 100);
 
   return (
@@ -148,6 +159,7 @@ export default function ProgressReport({
           <CircularProgress value={tasksCompleted} max={Math.max(tasksCompleted, 20)} label="Tasks" icon={CheckCircle} color="kid-green" />
           <CircularProgress value={perfectScores} max={Math.max(perfectScores, 10)} label="Perfect" icon={Target} color="kid-orange" />
           <CircularProgress value={streak} max={Math.max(streak, 7)} label="Streak" icon={Flame} color="kid-pink" />
+          <CircularProgress value={easterEggsFound} max={5} label="Eggs Found" icon={Sparkles} color="kid-purple" />
         </div>
 
         {/* Task Breakdown - Visual Bars */}

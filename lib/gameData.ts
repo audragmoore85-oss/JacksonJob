@@ -438,6 +438,12 @@ export const STICKERS = [
   "📚", "✏️", "🔢", "⌨️", "🧠", "💡", "🎯", "👑",
   "🦄", "🐙", "🦋", "🌸", "🍎", "🍕", "🍦", "🎁",
   "🐱", "🐶", "🦊", "🐼", "🐨", "🦁", "🐸", "🐧",
+  "🦉", "🦜", "🐢", "🐬", "🦕", "🐉", "🧩", "🔮",
+  "⚡", "🔥", "❄️", "🌍", "🌙", "☀️", "⭐", "💫",
+  "🍰", "🧁", "🍓", "🥕", "🍔", "🌮", "🍣", "🍩",
+  "🎮", "🎸", "🎺", "🥁", "🎤", "🎧", "🎹", "🎻",
+  "🏅", "🥇", "🥈", "🥉", "💎", "🗝️", "🧸", "🎭",
+  "🍀", "🌻", "🌺", "🍄", "🌵", "🌴", "🌊", "⛰️",
 ];
 
 export function getRandomSticker(): string {
@@ -506,25 +512,39 @@ export interface AchievementStats {
   streak: number;
   stickersCollected: number;
   quickCompleted: number;
+  wordMatchCompleted: number;
+  memoryMatchCompleted: number;
+  dailyQuizCompleted: number;
+  easterEggsFound: number;
 }
 
 export const ACHIEVEMENTS: AchievementBadge[] = [
   { id: "first_star", name: "First Star", emoji: "⭐", description: "Earn your first star", check: (s) => s.totalStars >= 1 },
   { id: "ten_stars", name: "Rising Star", emoji: "🌟", description: "Earn 10 stars", check: (s) => s.totalStars >= 10 },
   { id: "fifty_stars", name: "Superstar", emoji: "✨", description: "Earn 50 stars", check: (s) => s.totalStars >= 50 },
+  { id: "hundred_stars", name: "Star Legend", emoji: "💫", description: "Earn 100 stars", check: (s) => s.totalStars >= 100 },
   { id: "first_task", name: "Getting Started", emoji: "🎯", description: "Complete your first task", check: (s) => s.tasksCompleted >= 1 },
   { id: "ten_tasks", name: "Hard Worker", emoji: "💪", description: "Complete 10 tasks", check: (s) => s.tasksCompleted >= 10 },
+  { id: "twentyfive_tasks", name: "Task Master", emoji: "🏆", description: "Complete 25 tasks", check: (s) => s.tasksCompleted >= 25 },
   { id: "math_whiz", name: "Math Whiz", emoji: "🔢", description: "Complete 5 math tasks", check: (s) => s.mathCompleted >= 5 },
   { id: "bookworm", name: "Bookworm", emoji: "📚", description: "Complete 5 reading tasks", check: (s) => s.readingCompleted >= 5 },
   { id: "typist", name: "Email Pro", emoji: "⌨️", description: "Complete 5 typing tasks", check: (s) => s.typingCompleted >= 5 },
   { id: "perfect", name: "Perfectionist", emoji: "💯", description: "Get 3 perfect scores", check: (s) => s.perfectScores >= 3 },
+  { id: "perfect_five", name: "Flawless", emoji: "👑", description: "Get 5 perfect scores", check: (s) => s.perfectScores >= 5 },
   { id: "streak3", name: "On Fire", emoji: "🔥", description: "3-day streak", check: (s) => s.streak >= 3 },
   { id: "streak7", name: "Unstoppable", emoji: "⚡", description: "7-day streak", check: (s) => s.streak >= 7 },
+  { id: "streak14", name: "Dedication", emoji: "📅", description: "14-day streak", check: (s) => s.streak >= 14 },
   { id: "collector", name: "Collector", emoji: "🎨", description: "Collect 10 stickers", check: (s) => s.stickersCollected >= 10 },
+  { id: "sticker_hoarder", name: "Sticker Hoarder", emoji: "🖼️", description: "Collect 25 stickers", check: (s) => s.stickersCollected >= 25 },
   { id: "speller", name: "Word Master", emoji: "📝", description: "Complete 5 spelling tasks", check: (s) => s.spellingCompleted >= 5 },
   { id: "logician", name: "Logic Pro", emoji: "🧩", description: "Complete 5 logic tasks", check: (s) => s.logicCompleted >= 5 },
   { id: "author", name: "Young Author", emoji: "✍️", description: "Complete 5 writing tasks", check: (s) => s.writingCompleted >= 5 },
   { id: "speed_demon", name: "Speed Demon", emoji: "⚡", description: "Complete 5 Quick Tasks in Timer Mode", check: (s) => s.quickCompleted >= 5 },
+  { id: "word_matcher", name: "Word Matcher", emoji: "🔤", description: "Complete 3 Word Match games", check: (s) => s.wordMatchCompleted >= 3 },
+  { id: "memory_master", name: "Memory Master", emoji: "🧠", description: "Complete 3 Memory Match games", check: (s) => s.memoryMatchCompleted >= 3 },
+  { id: "quiz_champion", name: "Quiz Champion", emoji: "🎓", description: "Complete 3 Daily Quizzes", check: (s) => s.dailyQuizCompleted >= 3 },
+  { id: "explorer", name: "Explorer", emoji: "🔍", description: "Find 3 hidden Easter eggs", check: (s) => s.easterEggsFound >= 3 },
+  { id: "well_rounded", name: "Well-Rounded", emoji: "🌟", description: "Complete at least 1 of each task type", check: (s) => s.mathCompleted >= 1 && s.readingCompleted >= 1 && s.typingCompleted >= 1 && s.spellingCompleted >= 1 && s.logicCompleted >= 1 && s.writingCompleted >= 1 },
 ];
 
 export function getTodayString(): string {
@@ -1007,4 +1027,145 @@ export const COFFEE_BREAK_ITEMS: CoffeeBreakItem[] = [
   { id: "fruit", emoji: "🍎", name: "Apple" },
   { id: "sandwich", emoji: "🥪", name: "Sandwich" },
   { id: "donut", emoji: "🍩", name: "Donut" },
+];
+
+// ==================== WORD MATCH ====================
+
+export interface WordMatchPair {
+  word: string;
+  emoji: string;
+}
+
+export const WORD_MATCH_SETS: Record<AgeGroup, WordMatchPair[][]> = {
+  "4-6": [
+    [
+      { word: "cat", emoji: "🐱" },
+      { word: "dog", emoji: "🐶" },
+      { word: "sun", emoji: "☀️" },
+      { word: "tree", emoji: "🌳" },
+    ],
+    [
+      { word: "apple", emoji: "🍎" },
+      { word: "fish", emoji: "🐟" },
+      { word: "car", emoji: "🚗" },
+      { word: "star", emoji: "⭐" },
+    ],
+    [
+      { word: "bird", emoji: "🐦" },
+      { word: "cake", emoji: "🎂" },
+      { word: "moon", emoji: "🌙" },
+      { word: "ball", emoji: "⚽" },
+    ],
+  ],
+  "7-9": [
+    [
+      { word: "planet", emoji: "🪐" },
+      { word: "rocket", emoji: "🚀" },
+      { word: "castle", emoji: "🏰" },
+      { word: "dragon", emoji: "🐉" },
+      { word: "guitar", emoji: "🎸" },
+      { word: "pizza", emoji: "🍕" },
+    ],
+    [
+      { word: "volcano", emoji: "🌋" },
+      { word: "rainbow", emoji: "🌈" },
+      { word: "treasure", emoji: "💎" },
+      { word: "robot", emoji: "🤖" },
+      { word: "penguin", emoji: "🐧" },
+      { word: "octopus", emoji: "🐙" },
+    ],
+  ],
+  "10-12": [
+    [
+      { word: "telescope", emoji: "🔭" },
+      { word: "laboratory", emoji: "🧪" },
+      { word: "symphony", emoji: "🎼" },
+      { word: "architecture", emoji: "🏛️" },
+      { word: "chemistry", emoji: "⚗️" },
+      { word: "adventure", emoji: "🗺️" },
+    ],
+    [
+      { word: "ecosystem", emoji: "🌍" },
+      { word: "algorithm", emoji: "💻" },
+      { word: "democracy", emoji: "🗳️" },
+      { word: "renaissance", emoji: "🎨" },
+      { word: "metamorphosis", emoji: "🦋" },
+      { word: "constellation", emoji: "✨" },
+    ],
+  ],
+};
+
+export function generateWordMatchSet(ageGroup: AgeGroup): WordMatchPair[] {
+  const sets = WORD_MATCH_SETS[ageGroup];
+  return sets[Math.floor(Math.random() * sets.length)];
+}
+
+// ==================== MEMORY MATCH ====================
+
+export const MEMORY_EMOJIS: Record<AgeGroup, string[]> = {
+  "4-6": ["🐱", "🐶", "🐰", "🐻", "🦁", "🐼", "🦊", "🐨"],
+  "7-9": ["🚀", "🪐", "⭐", "🌙", "☄️", "🛸", "👨‍🚀", "🔭"],
+  "10-12": ["🧪", "⚗️", "🔬", "🧬", "💻", "🤖", "🧠", "⚛️"],
+};
+
+export function generateMemoryCards(ageGroup: AgeGroup): string[] {
+  const emojis = MEMORY_EMOJIS[ageGroup];
+  const selected = emojis.slice(0, 6);
+  return [...selected, ...selected].sort(() => Math.random() - 0.5);
+}
+
+// ==================== DAILY QUIZ ====================
+
+export interface DailyQuizQuestion {
+  question: string;
+  options: string[];
+  answer: number;
+  category: string;
+  emoji: string;
+}
+
+export function generateDailyQuiz(ageGroup: AgeGroup): DailyQuizQuestion[] {
+  const allQuestions: DailyQuizQuestion[] = [
+    { question: "What is 5 + 3?", options: ["6", "7", "8", "9"], answer: 2, category: "Math", emoji: "🔢" },
+    { question: "What color is the sky?", options: ["Green", "Blue", "Red", "Purple"], answer: 1, category: "Science", emoji: "🌍" },
+    { question: "How many days in a week?", options: ["5", "6", "7", "8"], answer: 2, category: "General", emoji: "📅" },
+    { question: "What is 10 - 4?", options: ["5", "6", "7", "4"], answer: 1, category: "Math", emoji: "🔢" },
+    { question: "Which animal says 'moo'?", options: ["Dog", "Cat", "Cow", "Duck"], answer: 2, category: "Animals", emoji: "🐄" },
+    { question: "What is the opposite of 'hot'?", options: ["Warm", "Cold", "Cool", "Wet"], answer: 1, category: "Words", emoji: "📝" },
+    { question: "How many legs does a spider have?", options: ["6", "8", "10", "4"], answer: 1, category: "Science", emoji: "🕷️" },
+    { question: "What is 3 × 3?", options: ["6", "8", "9", "12"], answer: 2, category: "Math", emoji: "🔢" },
+    { question: "Which is a fruit?", options: ["Carrot", "Broccoli", "Banana", "Onion"], answer: 2, category: "Food", emoji: "🍌" },
+    { question: "What season comes after winter?", options: ["Summer", "Fall", "Spring", "Autumn"], answer: 2, category: "Nature", emoji: "🌸" },
+    { question: "What is 20 ÷ 4?", options: ["4", "5", "6", "10"], answer: 1, category: "Math", emoji: "🔢" },
+    { question: "Which planet do we live on?", options: ["Mars", "Venus", "Earth", "Jupiter"], answer: 2, category: "Space", emoji: "🌍" },
+    { question: "What is the largest ocean?", options: ["Atlantic", "Indian", "Arctic", "Pacific"], answer: 3, category: "Geography", emoji: "🌊" },
+    { question: "How many colors in a rainbow?", options: ["5", "6", "7", "8"], answer: 2, category: "Science", emoji: "🌈" },
+    { question: "What is 15 + 15?", options: ["25", "30", "35", "20"], answer: 1, category: "Math", emoji: "🔢" },
+  ];
+
+  const ageFiltered = ageGroup === "4-6"
+    ? allQuestions.filter(q => ["Math", "Animals", "Words", "Food", "Nature"].includes(q.category))
+    : ageGroup === "7-9"
+    ? allQuestions.filter(q => !["Geography"].includes(q.category))
+    : allQuestions;
+
+  const shuffled = [...ageFiltered].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 5);
+}
+
+// ==================== EASTER EGGS ====================
+
+export interface EasterEgg {
+  id: string;
+  emoji: string;
+  message: string;
+  stars: number;
+}
+
+export const EASTER_EGGS: EasterEgg[] = [
+  { id: "hidden_star", emoji: "⭐", message: "You found a hidden star!", stars: 2 },
+  { id: "lucky_clover", emoji: "🍀", message: "Lucky clover! Bonus stars!", stars: 3 },
+  { id: "magic_wand", emoji: "🪄", message: "Magic wand discovered!", stars: 1 },
+  { id: "secret_treasure", emoji: "💎", message: "Secret treasure found!", stars: 5 },
+  { id: "mystery_key", emoji: "🗝️", message: "A mysterious key!", stars: 2 },
 ];

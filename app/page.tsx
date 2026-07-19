@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, RotateCcw, Star } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement, getTodayString, isDailyChallengeAvailable, calculateStreak, AchievementStats, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, getAvailableBossProject, getBossProjectThreshold, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
+import { AgeGroup, DIFFICULTY_CONFIGS, getRandomSticker, getRandomEncouragement, getTodayString, isDailyChallengeAvailable, calculateStreak, AchievementStats, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, getAvailableBossProject, getBossProjectThreshold, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme, EASTER_EGGS } from "@/lib/gameData";
 import { playCelebrate, playClick } from "@/lib/sounds";
 import DeskScene from "@/components/DeskScene";
 import DifficultySelector from "@/components/DifficultySelector";
@@ -14,6 +14,9 @@ import SpellingTask from "@/components/SpellingTask";
 import LogicTask from "@/components/LogicTask";
 import WritingTask from "@/components/WritingTask";
 import TimerMode from "@/components/TimerMode";
+import WordMatch from "@/components/WordMatch";
+import MemoryMatch from "@/components/MemoryMatch";
+import DailyQuiz from "@/components/DailyQuiz";
 import StickerBoard from "@/components/StickerBoard";
 import DeskShop from "@/components/DeskShop";
 import ProgressReport from "@/components/ProgressReport";
@@ -27,8 +30,8 @@ import LuckySpin from "@/components/LuckySpin";
 import RewardChest from "@/components/RewardChest";
 import MusicPlayer from "@/components/MusicPlayer";
 
-type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "timer" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
-type TaskType = "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "quick";
+type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "timer" | "wordmatch" | "memorymatch" | "dailyquiz" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
+type TaskType = "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "quick" | "wordmatch" | "memorymatch" | "dailyquiz";
 
 interface PlayerProfile {
   playerName: string;
@@ -57,6 +60,10 @@ interface PlayerProfile {
   showPet: boolean;
   lastSpinDate: string | null;
   quickCompleted: number;
+  wordMatchCompleted: number;
+  memoryMatchCompleted: number;
+  dailyQuizCompleted: number;
+  easterEggsFound: string[];
 }
 
 const PROFILES_KEY = "kidsDeskJobProfiles";
@@ -100,6 +107,10 @@ function loadProfiles(): Record<string, PlayerProfile> {
             showPet: true,
             lastSpinDate: null,
             quickCompleted: 0,
+            wordMatchCompleted: 0,
+            memoryMatchCompleted: 0,
+            dailyQuizCompleted: 0,
+            easterEggsFound: [],
           },
         };
         localStorage.setItem(PROFILES_KEY, JSON.stringify(migrated));
@@ -165,6 +176,10 @@ export default function Home() {
   const [showRewardChest, setShowRewardChest] = useState(false);
   const [lastSpinDate, setLastSpinDate] = useState<string | null>(null);
   const [quickCompleted, setQuickCompleted] = useState(0);
+  const [wordMatchCompleted, setWordMatchCompleted] = useState(0);
+  const [memoryMatchCompleted, setMemoryMatchCompleted] = useState(0);
+  const [dailyQuizCompleted, setDailyQuizCompleted] = useState(0);
+  const [easterEggsFound, setEasterEggsFound] = useState<string[]>([]);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(AVATARS[0].id);
 
   const config = ageGroup ? DIFFICULTY_CONFIGS[ageGroup] : null;
@@ -203,10 +218,14 @@ export default function Home() {
         showPet,
         lastSpinDate,
         quickCompleted,
+        wordMatchCompleted,
+        memoryMatchCompleted,
+        dailyQuizCompleted,
+        easterEggsFound,
       });
       setSavedProfiles(loadProfiles());
     }
-  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, ownedThemes, currentTheme, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet, lastSpinDate, quickCompleted]);
+  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, ownedThemes, currentTheme, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet, lastSpinDate, quickCompleted, wordMatchCompleted, memoryMatchCompleted, dailyQuizCompleted, easterEggsFound]);
 
   useEffect(() => {
     if (screen === "celebration" && pendingSticker) {
@@ -251,6 +270,10 @@ export default function Home() {
     setShowPet(profile.showPet !== false);
     setLastSpinDate(profile.lastSpinDate || null);
     setQuickCompleted(profile.quickCompleted || 0);
+    setWordMatchCompleted(profile.wordMatchCompleted || 0);
+    setMemoryMatchCompleted(profile.memoryMatchCompleted || 0);
+    setDailyQuizCompleted(profile.dailyQuizCompleted || 0);
+    setEasterEggsFound(profile.easterEggsFound || []);
     setIsDailyChallenge(false);
   };
 
@@ -287,6 +310,9 @@ export default function Home() {
     if (taskType === "logic") setLogicCompleted((prev: number) => prev + 1);
     if (taskType === "writing") setWritingCompleted((prev: number) => prev + 1);
     if (taskType === "quick") setQuickCompleted((prev: number) => prev + 1);
+    if (taskType === "wordmatch") setWordMatchCompleted((prev: number) => prev + 1);
+    if (taskType === "memorymatch") setMemoryMatchCompleted((prev: number) => prev + 1);
+    if (taskType === "dailyquiz") setDailyQuizCompleted((prev: number) => prev + 1);
     if (earnedStarsCount === 3) setPerfectScores((prev: number) => prev + 1);
 
     if (isDailyChallenge && (taskType === "math" || taskType === "reading" || taskType === "typing") && !dailyChallengeProgress.includes(taskType)) {
@@ -316,6 +342,15 @@ export default function Home() {
     playCelebrate();
   };
 
+  const handleEasterEggFound = (eggId: string) => {
+    if (easterEggsFound.includes(eggId)) return;
+    const egg = EASTER_EGGS.find((e) => e.id === eggId);
+    if (!egg) return;
+    setEasterEggsFound((prev: string[]) => [...prev, eggId]);
+    setStars((prev: number) => prev + egg.stars);
+    playCelebrate();
+  };
+
   const checkAchievements = () => {
     const stats: AchievementStats = {
       totalStars: stars,
@@ -330,6 +365,10 @@ export default function Home() {
       streak,
       stickersCollected: stickers.length + (pendingSticker ? 1 : 0),
       quickCompleted,
+      wordMatchCompleted,
+      memoryMatchCompleted,
+      dailyQuizCompleted,
+      easterEggsFound: easterEggsFound.length,
     };
     const newlyUnlocked: string[] = [];
     ACHIEVEMENTS.forEach((badge) => {
@@ -458,6 +497,10 @@ export default function Home() {
     setSelectedAvatar(AVATARS[0].id);
     setNewAchievements([]);
     setQuickCompleted(0);
+    setWordMatchCompleted(0);
+    setMemoryMatchCompleted(0);
+    setDailyQuizCompleted(0);
+    setEasterEggsFound([]);
   };
 
   return (
@@ -477,22 +520,57 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="min-h-screen flex flex-col items-center justify-center p-6"
-            style={{ background: "linear-gradient(135deg, #FFF8E7 0%, #E8F4FD 100%)" }}
+            className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #FFF8E7 0%, #E8F4FD 50%, #F0E8FD 100%)" }}
           >
+            {/* Floating background decorations */}
+            {["🌟", "⭐", "✨", "🎈", "🎨", "🚀"].map((emoji, i) => (
+              <motion.div
+                key={`float-${i}`}
+                animate={{
+                  y: [0, -20, 0],
+                  x: [0, Math.random() * 30 - 15, 0],
+                  rotate: [0, 10, -10, 0],
+                }}
+                transition={{
+                  duration: 3 + i * 0.5,
+                  repeat: Infinity,
+                  delay: i * 0.3,
+                }}
+                className="absolute text-3xl opacity-20"
+                style={{
+                  top: `${10 + i * 12}%`,
+                  left: `${5 + i * 15}%`,
+                }}
+              >
+                {emoji}
+              </motion.div>
+            ))}
+
             <motion.div
               animate={{ y: [0, -15, 0] }}
               transition={{ duration: 3, repeat: Infinity }}
-              className="text-8xl mb-4"
+              className="text-8xl mb-4 relative z-10"
+              style={{ filter: "drop-shadow(0 5px 15px rgba(0,0,0,0.1))" }}
             >
               {getCurrentSeasonalTheme()?.emoji || "🏢"}
             </motion.div>
-            <h1 className="text-5xl md:text-6xl font-bold text-kid-blue text-shadow-kid text-center mb-2">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-5xl md:text-6xl font-bold text-kid-blue text-shadow-kid text-center mb-2 relative z-10"
+            >
               Kids Desk Job
-            </h1>
-            <p className="text-xl text-gray-600 text-center mb-8">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-xl text-gray-600 text-center mb-8 relative z-10"
+            >
               Learn math, reading, and typing while working at your very own desk!
-            </p>
+            </motion.p>
             {/* Existing Profiles */}
             {Object.keys(savedProfiles).length > 0 && (
               <div className="w-full max-w-md mb-4">
@@ -582,10 +660,17 @@ export default function Home() {
                 </span>
               </button>
             </div>
-            <div className="flex gap-3 mt-6 text-4xl">
-              <motion.span animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 2, repeat: Infinity }}>🔢</motion.span>
-              <motion.span animate={{ rotate: [0, -10, 10, 0] }} transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}>📚</motion.span>
-              <motion.span animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}>⌨️</motion.span>
+            <div className="flex gap-3 mt-6 text-4xl relative z-10">
+              {["🔢", "📚", "⌨️", "🧠", "🎨", "🚀"].map((emoji, i) => (
+                <motion.span
+                  key={i}
+                  animate={{ rotate: [0, 10, -10, 0], y: [0, -8, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: i * 0.15 }}
+                  whileHover={{ scale: 1.3 }}
+                >
+                  {emoji}
+                </motion.span>
+              ))}
             </div>
           </motion.div>
         )}
@@ -629,6 +714,10 @@ export default function Home() {
             onCoffeeBreak={() => setShowCoffeeBreak(true)}
             onTogglePet={() => setShowPet(!showPet)}
             onStartTimer={() => setScreen("timer")}
+            onStartWordMatch={() => setScreen("wordmatch")}
+            onStartMemoryMatch={() => setScreen("memorymatch")}
+            onStartDailyQuiz={() => setScreen("dailyquiz")}
+            onEasterEggFound={handleEasterEggFound}
             onReset={handleReset}
           />
         )}
@@ -708,25 +797,85 @@ export default function Home() {
           />
         )}
 
+        {/* WORD MATCH */}
+        {screen === "wordmatch" && ageGroup && (
+          <WordMatch
+            key="wordmatch"
+            ageGroup={ageGroup}
+            onComplete={(earned) => handleTaskComplete("wordmatch", earned)}
+            onBack={() => setScreen("desk")}
+          />
+        )}
+
+        {/* MEMORY MATCH */}
+        {screen === "memorymatch" && ageGroup && (
+          <MemoryMatch
+            key="memorymatch"
+            ageGroup={ageGroup}
+            onComplete={(earned) => handleTaskComplete("memorymatch", earned)}
+            onBack={() => setScreen("desk")}
+          />
+        )}
+
+        {/* DAILY QUIZ */}
+        {screen === "dailyquiz" && ageGroup && (
+          <DailyQuiz
+            key="dailyquiz"
+            ageGroup={ageGroup}
+            onComplete={(earned) => handleTaskComplete("dailyquiz", earned)}
+            onBack={() => setScreen("desk")}
+          />
+        )}
+
         {/* CELEBRATION SCREEN */}
         {screen === "celebration" && (
           <motion.div
             key="celebration"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="min-h-screen flex flex-col items-center justify-center p-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden"
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200 }}
-              className="kid-card border-kid-yellow text-center max-w-md"
-            >
+            {/* Confetti particles */}
+            {Array.from({ length: 20 }).map((_, i) => (
               <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                key={`confetti-${i}`}
+                initial={{
+                  x: Math.random() * 800 - 400,
+                  y: -300,
+                  rotate: 0,
+                  opacity: 1,
+                }}
+                animate={{
+                  y: 400,
+                  rotate: Math.random() * 360,
+                  opacity: [1, 1, 0],
+                }}
+                transition={{
+                  duration: 2 + Math.random() * 2,
+                  delay: Math.random() * 0.5,
+                  repeat: Infinity,
+                  ease: "easeOut",
+                }}
+                className="absolute text-2xl"
+                style={{ left: "50%" }}
+              >
+                {["🎉", "🎊", "⭐", "🌟", "💫", "🎈", "🏆"][i % 7]}
+              </motion.div>
+            ))}
+
+            <motion.div
+              initial={{ scale: 0, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              className="kid-card border-kid-yellow text-center max-w-md relative z-10"
+            >
+              {/* Spinning celebration emoji with glow */}
+              <motion.div
+                animate={{ rotate: [0, 360], scale: [1, 1.1, 1] }}
+                transition={{ rotate: { duration: 3, repeat: Infinity }, scale: { duration: 1.5, repeat: Infinity } }}
                 className="text-7xl mb-4"
+                style={{ filter: "drop-shadow(0 0 20px rgba(255, 200, 0, 0.5))" }}
               >
                 🎉
               </motion.div>
@@ -736,70 +885,100 @@ export default function Home() {
               <p className="text-lg text-gray-600 mb-4">
                 {completedTaskType ? `You finished your ${completedTaskType} task!` : "Amazing work!"}
               </p>
-              <div className="flex justify-center gap-2 mb-4">
+              {/* Stars with bounce and glow */}
+              <div className="flex justify-center gap-3 mb-4">
                 {[1, 2, 3].map((i) => (
                   <motion.div
                     key={i}
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: i * 0.2, type: "spring" }}
+                    initial={{ scale: 0, rotate: -180, y: -20 }}
+                    animate={{ scale: 1, rotate: 0, y: 0 }}
+                    transition={{ delay: i * 0.2, type: "spring", stiffness: 300 }}
+                    whileHover={{ scale: 1.3 }}
                   >
                     <Star
-                      className={`w-10 h-10 ${
+                      className={`w-12 h-12 ${
                         i <= earnedStars ? "fill-kid-yellow text-kid-yellow" : "fill-gray-200 text-gray-200"
                       }`}
+                      style={i <= earnedStars ? { filter: "drop-shadow(0 0 8px rgba(255, 200, 0, 0.6))" } : {}}
                     />
                   </motion.div>
                 ))}
               </div>
               {earnedStars === 3 && (
-                <p className="text-kid-orange font-bold mb-2">⭐ Perfect Score! ⭐</p>
+                <motion.p
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8, type: "spring" }}
+                  className="text-kid-orange font-bold mb-2 text-lg"
+                >
+                  ⭐ Perfect Score! ⭐
+                </motion.p>
               )}
               {pendingSticker && (
                 <motion.div
-                  initial={{ scale: 0, y: 50 }}
-                  animate={{ scale: 1, y: 0 }}
-                  transition={{ delay: 0.8, type: "spring" }}
+                  initial={{ scale: 0, y: 50, rotate: -30 }}
+                  animate={{ scale: 1, y: 0, rotate: 0 }}
+                  transition={{ delay: 0.8, type: "spring", stiffness: 200 }}
+                  whileHover={{ scale: 1.2, rotate: 10 }}
                   className="text-6xl mb-2"
                 >
                   {pendingSticker}
                 </motion.div>
               )}
               {pendingSticker && (
-                <p className="text-sm text-gray-500 mb-4">
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="text-sm text-gray-500 mb-4"
+                >
                   A new sticker for your collection!
-                </p>
+                </motion.p>
               )}
               {newAchievements.length > 0 && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.2 }}
-                  className="bg-kid-purple/10 rounded-xl p-3 mb-4 border-2 border-kid-purple/30"
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 1.2, type: "spring" }}
+                  className="bg-gradient-to-r from-kid-purple/10 to-kid-pink/10 rounded-xl p-3 mb-4 border-2 border-kid-purple/30"
                 >
-                  <p className="text-sm font-bold text-kid-purple mb-2">🏆 New Achievement Unlocked!</p>
+                  <motion.p
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-sm font-bold text-kid-purple mb-2"
+                  >
+                    🏆 New Achievement Unlocked!
+                  </motion.p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {newAchievements.map((aid) => {
                       const badge = ACHIEVEMENTS.find((b: AchievementBadge) => b.id === aid);
                       return badge ? (
-                        <div key={aid} className="flex items-center gap-1 bg-white rounded-lg px-2 py-1">
+                        <motion.div
+                          key={aid}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 300 }}
+                          className="flex items-center gap-1 bg-white rounded-lg px-2 py-1 shadow-sm"
+                        >
                           <span className="text-xl">{badge.emoji}</span>
                           <span className="text-xs font-bold text-gray-700">{badge.name}</span>
-                        </div>
+                        </motion.div>
                       ) : null;
                     })}
                   </div>
                 </motion.div>
               )}
-              <button
+              <motion.button
                 onClick={() => {
                   setNewAchievements([]);
                   handleBackToDesk();
                 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 className="kid-button bg-kid-green hover:bg-green-600 w-full"
               >
                 Back to Desk 🖥️
-              </button>
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
@@ -834,6 +1013,10 @@ export default function Home() {
             logicCompleted={logicCompleted}
             writingCompleted={writingCompleted}
             quickCompleted={quickCompleted}
+            wordMatchCompleted={wordMatchCompleted}
+            memoryMatchCompleted={memoryMatchCompleted}
+            dailyQuizCompleted={dailyQuizCompleted}
+            easterEggsFound={easterEggsFound.length}
             perfectScores={perfectScores}
             streak={streak}
             stickersCount={stickers.length}
@@ -877,6 +1060,10 @@ export default function Home() {
             logicCompleted={logicCompleted}
             writingCompleted={writingCompleted}
             quickCompleted={quickCompleted}
+            wordMatchCompleted={wordMatchCompleted}
+            memoryMatchCompleted={memoryMatchCompleted}
+            dailyQuizCompleted={dailyQuizCompleted}
+            easterEggsFound={easterEggsFound.length}
             perfectScores={perfectScores}
             streak={streak}
             stickersCount={stickers.length}
@@ -920,7 +1107,7 @@ export default function Home() {
       )}
 
       {/* Sticker Board - always visible on desk and task screens */}
-      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "spelling" || screen === "logic" || screen === "writing" || screen === "timer" || screen === "shop" || screen === "report") && (
+      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "spelling" || screen === "logic" || screen === "writing" || screen === "timer" || screen === "wordmatch" || screen === "memorymatch" || screen === "dailyquiz" || screen === "shop" || screen === "report") && (
         <StickerBoard stickers={stickers} />
       )}
       </div>

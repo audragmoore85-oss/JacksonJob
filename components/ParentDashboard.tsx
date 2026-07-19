@@ -18,6 +18,10 @@ interface Props {
   logicCompleted: number;
   writingCompleted: number;
   quickCompleted: number;
+  wordMatchCompleted: number;
+  memoryMatchCompleted: number;
+  dailyQuizCompleted: number;
+  easterEggsFound: number;
   perfectScores: number;
   streak: number;
   stickersCount: number;
@@ -40,6 +44,10 @@ export default function ParentDashboard({
   logicCompleted,
   writingCompleted,
   quickCompleted,
+  wordMatchCompleted,
+  memoryMatchCompleted,
+  dailyQuizCompleted,
+  easterEggsFound,
   perfectScores,
   streak,
   stickersCount,
@@ -203,6 +211,10 @@ export default function ParentDashboard({
               { label: "Logic Done", value: logicCompleted },
               { label: "Writing Done", value: writingCompleted },
               { label: "Quick Tasks", value: quickCompleted },
+              { label: "Word Match", value: wordMatchCompleted },
+              { label: "Memory Match", value: memoryMatchCompleted },
+              { label: "Daily Quiz", value: dailyQuizCompleted },
+              { label: "Easter Eggs", value: easterEggsFound },
             ].map((stat) => (
               <div key={stat.label} className="bg-white rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-gray-800">{stat.value}</p>
