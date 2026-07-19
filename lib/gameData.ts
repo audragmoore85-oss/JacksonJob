@@ -505,6 +505,7 @@ export interface AchievementStats {
   perfectScores: number;
   streak: number;
   stickersCollected: number;
+  quickCompleted: number;
 }
 
 export const ACHIEVEMENTS: AchievementBadge[] = [
@@ -523,6 +524,7 @@ export const ACHIEVEMENTS: AchievementBadge[] = [
   { id: "speller", name: "Word Master", emoji: "📝", description: "Complete 5 spelling tasks", check: (s) => s.spellingCompleted >= 5 },
   { id: "logician", name: "Logic Pro", emoji: "🧩", description: "Complete 5 logic tasks", check: (s) => s.logicCompleted >= 5 },
   { id: "author", name: "Young Author", emoji: "✍️", description: "Complete 5 writing tasks", check: (s) => s.writingCompleted >= 5 },
+  { id: "speed_demon", name: "Speed Demon", emoji: "⚡", description: "Complete 5 Quick Tasks in Timer Mode", check: (s) => s.quickCompleted >= 5 },
 ];
 
 export function getTodayString(): string {
@@ -892,6 +894,101 @@ export const TIMER_DURATIONS: Record<AgeGroup, number> = {
   "7-9": 45,
   "10-12": 30,
 };
+
+export interface QuickTask {
+  question: string;
+  answer: string;
+  options: string[];
+  emoji: string;
+}
+
+const QUICK_MATH_TASKS: Record<AgeGroup, QuickTask[]> = {
+  "4-6": [
+    { question: "2 + 3 = ?", answer: "5", options: ["4", "5", "6", "3"], emoji: "🔢" },
+    { question: "7 - 2 = ?", answer: "5", options: ["4", "5", "6", "3"], emoji: "🔢" },
+    { question: "1 + 4 = ?", answer: "5", options: ["4", "5", "6", "3"], emoji: "🔢" },
+    { question: "6 - 3 = ?", answer: "3", options: ["2", "3", "4", "5"], emoji: "🔢" },
+    { question: "4 + 2 = ?", answer: "6", options: ["5", "6", "7", "4"], emoji: "🔢" },
+    { question: "8 - 1 = ?", answer: "7", options: ["6", "7", "8", "5"], emoji: "🔢" },
+    { question: "3 + 3 = ?", answer: "6", options: ["5", "6", "7", "4"], emoji: "🔢" },
+    { question: "9 - 4 = ?", answer: "5", options: ["4", "5", "6", "3"], emoji: "🔢" },
+  ],
+  "7-9": [
+    { question: "6 × 3 = ?", answer: "18", options: ["12", "18", "24", "15"], emoji: "🔢" },
+    { question: "15 ÷ 3 = ?", answer: "5", options: ["3", "5", "6", "4"], emoji: "🔢" },
+    { question: "8 × 4 = ?", answer: "32", options: ["24", "28", "32", "36"], emoji: "🔢" },
+    { question: "27 ÷ 9 = ?", answer: "3", options: ["2", "3", "4", "5"], emoji: "🔢" },
+    { question: "7 × 6 = ?", answer: "42", options: ["36", "42", "48", "35"], emoji: "🔢" },
+    { question: "48 ÷ 8 = ?", answer: "6", options: ["5", "6", "7", "8"], emoji: "🔢" },
+    { question: "9 × 4 = ?", answer: "36", options: ["32", "36", "40", "28"], emoji: "🔢" },
+    { question: "56 ÷ 7 = ?", answer: "8", options: ["6", "7", "8", "9"], emoji: "🔢" },
+  ],
+  "10-12": [
+    { question: "12 × 11 = ?", answer: "132", options: ["121", "132", "144", "125"], emoji: "🔢" },
+    { question: "144 ÷ 12 = ?", answer: "12", options: ["10", "11", "12", "14"], emoji: "🔢" },
+    { question: "15 × 7 = ?", answer: "105", options: ["95", "105", "115", "100"], emoji: "🔢" },
+    { question: "81 ÷ 9 = ?", answer: "9", options: ["7", "8", "9", "10"], emoji: "🔢" },
+    { question: "25 × 4 = ?", answer: "100", options: ["90", "100", "110", "95"], emoji: "🔢" },
+    { question: "63 ÷ 7 = ?", answer: "9", options: ["7", "8", "9", "10"], emoji: "🔢" },
+    { question: "14 × 6 = ?", answer: "84", options: ["78", "84", "90", "80"], emoji: "🔢" },
+    { question: "96 ÷ 8 = ?", answer: "12", options: ["10", "11", "12", "14"], emoji: "🔢" },
+  ],
+};
+
+const QUICK_WORD_TASKS: Record<AgeGroup, QuickTask[]> = {
+  "4-6": [
+    { question: "Which word rhymes with 'cat'?", answer: "hat", options: ["dog", "hat", "sun", "big"], emoji: "📝" },
+    { question: "Which letter starts 'apple'?", answer: "a", options: ["b", "a", "c", "e"], emoji: "📝" },
+    { question: "How many letters in 'dog'?", answer: "3", options: ["2", "3", "4", "5"], emoji: "📝" },
+    { question: "Which word means 'big'?", answer: "large", options: ["tiny", "small", "large", "short"], emoji: "📝" },
+    { question: "Which is a color?", answer: "red", options: ["run", "red", "rat", "rug"], emoji: "📝" },
+  ],
+  "7-9": [
+    { question: "Unscramble: 'tca' = ?", answer: "cat", options: ["act", "cat", "tac", "atc"], emoji: "📝" },
+    { question: "Unscramble: 'nwio' = ?", answer: "wino", options: ["wino", "owni", "inow", "wion"], emoji: "📝" },
+    { question: "Which is a noun?", answer: "house", options: ["run", "quickly", "house", "blue"], emoji: "📝" },
+    { question: "Synonym for 'happy'?", answer: "joyful", options: ["sad", "angry", "joyful", "tired"], emoji: "📝" },
+    { question: "How many syllables in 'banana'?", answer: "3", options: ["2", "3", "4", "5"], emoji: "📝" },
+  ],
+  "10-12": [
+    { question: "Antonym of 'ancient'?", answer: "modern", options: ["old", "modern", "historic", "aged"], emoji: "📝" },
+    { question: "Which is an adjective?", answer: "beautiful", options: ["run", "beautiful", "quickly", "garden"], emoji: "📝" },
+    { question: "Synonym for 'enormous'?", answer: "huge", options: ["tiny", "huge", "narrow", "flat"], emoji: "📝" },
+    { question: "Unscramble: 'tneerls' = ?", answer: "letters", options: ["letters", "ttersle", "erslett", "letterst"], emoji: "📝" },
+    { question: "Past tense of 'write'?", answer: "wrote", options: ["writed", "wrote", "written", "writing"], emoji: "📝" },
+  ],
+};
+
+const QUICK_LOGIC_TASKS: Record<AgeGroup, QuickTask[]> = {
+  "4-6": [
+    { question: "Which is biggest?", answer: "elephant", options: ["mouse", "cat", "elephant", "rabbit"], emoji: "🔍" },
+    { question: "Which doesn't belong?", answer: "banana", options: ["car", "truck", "bus", "banana"], emoji: "🔍" },
+    { question: "Next: red, blue, red, ?", answer: "blue", options: ["red", "blue", "green", "yellow"], emoji: "🔍" },
+    { question: "Which is a fruit?", answer: "apple", options: ["car", "apple", "chair", "book"], emoji: "🔍" },
+    { question: "Next: 1, 2, 3, ?", answer: "4", options: ["3", "4", "5", "6"], emoji: "🔍" },
+  ],
+  "7-9": [
+    { question: "Next: 2, 4, 6, ?", answer: "8", options: ["7", "8", "9", "10"], emoji: "🔍" },
+    { question: "Next: 3, 6, 9, ?", answer: "12", options: ["10", "11", "12", "15"], emoji: "🔍" },
+    { question: "Which doesn't belong?", answer: "triangle", options: ["dog", "cat", "triangle", "bird"], emoji: "🔍" },
+    { question: "Next: Mon, Tue, Wed, ?", answer: "Thu", options: ["Fri", "Thu", "Sat", "Sun"], emoji: "🔍" },
+    { question: "Odd one out?", answer: "swimming", options: ["running", "jumping", "swimming", "sleeping"], emoji: "🔍" },
+  ],
+  "10-12": [
+    { question: "Next: 1, 4, 9, 16, ?", answer: "25", options: ["20", "24", "25", "36"], emoji: "🔍" },
+    { question: "Next: 2, 6, 12, 20, ?", answer: "30", options: ["24", "28", "30", "36"], emoji: "🔍" },
+    { question: "Next: 1, 1, 2, 3, 5, ?", answer: "8", options: ["6", "7", "8", "9"], emoji: "🔍" },
+    { question: "Which is prime?", answer: "13", options: ["12", "13", "15", "21"], emoji: "🔍" },
+    { question: "Next: 3, 7, 15, 31, ?", answer: "63", options: ["47", "55", "63", "60"], emoji: "🔍" },
+  ],
+};
+
+export function generateQuickTask(ageGroup: AgeGroup): QuickTask {
+  const categories = [QUICK_MATH_TASKS, QUICK_WORD_TASKS, QUICK_LOGIC_TASKS];
+  const category = categories[Math.floor(Math.random() * categories.length)];
+  const tasks = category[ageGroup];
+  return tasks[Math.floor(Math.random() * tasks.length)];
+}
 
 // ==================== COFFEE BREAK ====================
 

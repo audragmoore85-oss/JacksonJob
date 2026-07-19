@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder, PenTool } from "lucide-react";
+import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder, PenTool, Timer } from "lucide-react";
 import Tooltip from "@/components/Tooltip";
 import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, DeskDecoration, DESK_THEMES, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 
@@ -29,6 +29,7 @@ interface Props {
   onStartDailyChallenge: () => void;
   onCoffeeBreak: () => void;
   onTogglePet: () => void;
+  onStartTimer: () => void;
   onReset: () => void;
 }
 
@@ -56,6 +57,7 @@ export default function DeskScene({
   onStartDailyChallenge,
   onCoffeeBreak,
   onTogglePet,
+  onStartTimer,
   onReset,
 }: Props) {
   const config = DIFFICULTY_CONFIGS[ageGroup];
@@ -189,6 +191,14 @@ export default function DeskScene({
               className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
             >
               <Lock className="w-5 h-5 text-kid-purple" />
+            </button>
+          </Tooltip>
+          <Tooltip text="Timer Mode" side="bottom">
+            <button
+              onClick={onStartTimer}
+              className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            >
+              <Timer className="w-5 h-5 text-kid-pink" />
             </button>
           </Tooltip>
           <Tooltip text="Coffee Break" side="bottom">

@@ -13,6 +13,7 @@ import TypingTask from "@/components/TypingTask";
 import SpellingTask from "@/components/SpellingTask";
 import LogicTask from "@/components/LogicTask";
 import WritingTask from "@/components/WritingTask";
+import TimerMode from "@/components/TimerMode";
 import StickerBoard from "@/components/StickerBoard";
 import DeskShop from "@/components/DeskShop";
 import ProgressReport from "@/components/ProgressReport";
@@ -26,8 +27,8 @@ import LuckySpin from "@/components/LuckySpin";
 import RewardChest from "@/components/RewardChest";
 import MusicPlayer from "@/components/MusicPlayer";
 
-type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
-type TaskType = "math" | "reading" | "typing" | "spelling" | "logic" | "writing";
+type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "timer" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
+type TaskType = "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "quick";
 
 interface PlayerProfile {
   playerName: string;
@@ -55,6 +56,7 @@ interface PlayerProfile {
   activeBossProject: string | null;
   showPet: boolean;
   lastSpinDate: string | null;
+  quickCompleted: number;
 }
 
 const PROFILES_KEY = "kidsDeskJobProfiles";
@@ -97,6 +99,7 @@ function loadProfiles(): Record<string, PlayerProfile> {
             activeBossProject: null,
             showPet: true,
             lastSpinDate: null,
+            quickCompleted: 0,
           },
         };
         localStorage.setItem(PROFILES_KEY, JSON.stringify(migrated));
@@ -161,6 +164,7 @@ export default function Home() {
   const [showLuckySpin, setShowLuckySpin] = useState(false);
   const [showRewardChest, setShowRewardChest] = useState(false);
   const [lastSpinDate, setLastSpinDate] = useState<string | null>(null);
+  const [quickCompleted, setQuickCompleted] = useState(0);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(AVATARS[0].id);
 
   const config = ageGroup ? DIFFICULTY_CONFIGS[ageGroup] : null;
@@ -198,10 +202,11 @@ export default function Home() {
         activeBossProject,
         showPet,
         lastSpinDate,
+        quickCompleted,
       });
       setSavedProfiles(loadProfiles());
     }
-  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, ownedThemes, currentTheme, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet, lastSpinDate]);
+  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, ownedThemes, currentTheme, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet, lastSpinDate, quickCompleted]);
 
   useEffect(() => {
     if (screen === "celebration" && pendingSticker) {
@@ -245,6 +250,7 @@ export default function Home() {
     setActiveBossProject(profile.activeBossProject || null);
     setShowPet(profile.showPet !== false);
     setLastSpinDate(profile.lastSpinDate || null);
+    setQuickCompleted(profile.quickCompleted || 0);
     setIsDailyChallenge(false);
   };
 
@@ -280,6 +286,7 @@ export default function Home() {
     if (taskType === "spelling") setSpellingCompleted((prev: number) => prev + 1);
     if (taskType === "logic") setLogicCompleted((prev: number) => prev + 1);
     if (taskType === "writing") setWritingCompleted((prev: number) => prev + 1);
+    if (taskType === "quick") setQuickCompleted((prev: number) => prev + 1);
     if (earnedStarsCount === 3) setPerfectScores((prev: number) => prev + 1);
 
     if (isDailyChallenge && (taskType === "math" || taskType === "reading" || taskType === "typing") && !dailyChallengeProgress.includes(taskType)) {
@@ -322,6 +329,7 @@ export default function Home() {
       perfectScores,
       streak,
       stickersCollected: stickers.length + (pendingSticker ? 1 : 0),
+      quickCompleted,
     };
     const newlyUnlocked: string[] = [];
     ACHIEVEMENTS.forEach((badge) => {
@@ -449,6 +457,7 @@ export default function Home() {
     setShowCoffeeBreak(false);
     setSelectedAvatar(AVATARS[0].id);
     setNewAchievements([]);
+    setQuickCompleted(0);
   };
 
   return (
@@ -619,6 +628,7 @@ export default function Home() {
             onStartDailyChallenge={() => { setIsDailyChallenge(true); setDailyChallengeProgress([]); }}
             onCoffeeBreak={() => setShowCoffeeBreak(true)}
             onTogglePet={() => setShowPet(!showPet)}
+            onStartTimer={() => setScreen("timer")}
             onReset={handleReset}
           />
         )}
@@ -685,6 +695,16 @@ export default function Home() {
             ageGroup={ageGroup}
             onComplete={(earned) => handleTaskComplete("writing", earned)}
             onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
+          />
+        )}
+
+        {/* TIMER MODE */}
+        {screen === "timer" && ageGroup && (
+          <TimerMode
+            key="timer"
+            ageGroup={ageGroup}
+            onComplete={(earned) => handleTaskComplete("quick", earned)}
+            onBack={() => setScreen("desk")}
           />
         )}
 
@@ -813,6 +833,7 @@ export default function Home() {
             spellingCompleted={spellingCompleted}
             logicCompleted={logicCompleted}
             writingCompleted={writingCompleted}
+            quickCompleted={quickCompleted}
             perfectScores={perfectScores}
             streak={streak}
             stickersCount={stickers.length}
@@ -855,6 +876,7 @@ export default function Home() {
             spellingCompleted={spellingCompleted}
             logicCompleted={logicCompleted}
             writingCompleted={writingCompleted}
+            quickCompleted={quickCompleted}
             perfectScores={perfectScores}
             streak={streak}
             stickersCount={stickers.length}
@@ -898,7 +920,7 @@ export default function Home() {
       )}
 
       {/* Sticker Board - always visible on desk and task screens */}
-      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "spelling" || screen === "logic" || screen === "writing" || screen === "shop" || screen === "report") && (
+      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "spelling" || screen === "logic" || screen === "writing" || screen === "timer" || screen === "shop" || screen === "report") && (
         <StickerBoard stickers={stickers} />
       )}
       </div>

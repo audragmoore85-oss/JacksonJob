@@ -4,12 +4,19 @@ import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Music, Volume2, VolumeX, ChevronUp, ChevronDown } from "lucide-react";
 
+type OscType = "sine" | "square" | "triangle" | "sawtooth";
+
 interface Track {
   name: string;
   emoji: string;
   notes: number[];
   tempo: number;
   loop: number;
+  oscType: OscType;
+  harmony: number[];
+  attack: number;
+  release: number;
+  bass: number[] | null;
 }
 
 const TRACKS: Track[] = [
@@ -19,6 +26,11 @@ const TRACKS: Track[] = [
     tempo: 400,
     loop: 8,
     notes: [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 261.63, 196.00],
+    oscType: "sawtooth",
+    harmony: [1.5, 2.0],
+    attack: 0.02,
+    release: 0.85,
+    bass: [65.41, 65.41, 98.00, 98.00],
   },
   {
     name: "Happy Vibes",
@@ -26,6 +38,11 @@ const TRACKS: Track[] = [
     tempo: 350,
     loop: 8,
     notes: [293.66, 349.23, 440.00, 523.25, 440.00, 349.23, 293.66, 261.63],
+    oscType: "triangle",
+    harmony: [1.25, 1.5],
+    attack: 0.01,
+    release: 0.8,
+    bass: [73.42, 73.42, 87.31, 87.31],
   },
   {
     name: "Chill Beats",
@@ -33,6 +50,11 @@ const TRACKS: Track[] = [
     tempo: 500,
     loop: 6,
     notes: [220.00, 261.63, 329.63, 261.63, 220.00, 196.00],
+    oscType: "sine",
+    harmony: [1.5],
+    attack: 0.08,
+    release: 0.95,
+    bass: [55.00, 55.00, 65.41, 65.41],
   },
   {
     name: "Cosmic Jazz",
@@ -40,6 +62,11 @@ const TRACKS: Track[] = [
     tempo: 300,
     loop: 10,
     notes: [349.23, 440.00, 523.25, 466.16, 392.00, 349.23, 311.13, 349.23, 440.00, 523.25],
+    oscType: "square",
+    harmony: [1.5],
+    attack: 0.03,
+    release: 0.7,
+    bass: [87.31, 87.31, 116.54, 116.54],
   },
   {
     name: "Magic Forest",
@@ -47,6 +74,11 @@ const TRACKS: Track[] = [
     tempo: 450,
     loop: 7,
     notes: [392.00, 440.00, 523.25, 587.33, 523.25, 440.00, 392.00],
+    oscType: "triangle",
+    harmony: [1.25, 1.5, 2.0],
+    attack: 0.05,
+    release: 0.9,
+    bass: [98.00, 98.00, 130.81, 130.81],
   },
 ];
 
@@ -99,22 +131,37 @@ export default function MusicPlayer() {
       if (!audioCtxRef.current || !gainRef.current) return;
 
       const freq = track.notes[noteIdxRef.current % track.notes.length];
-      const osc = audioCtxRef.current.createOscillator();
-      const noteGain = audioCtxRef.current.createGain();
-
-      osc.type = "sine";
-      osc.frequency.value = freq;
-
       const now = audioCtxRef.current.currentTime;
-      noteGain.gain.setValueAtTime(0, now);
-      noteGain.gain.linearRampToValueAtTime(0.8, now + 0.05);
-      noteGain.gain.linearRampToValueAtTime(0, now + track.tempo / 1000 * 0.9);
+      const noteDur = track.tempo / 1000;
 
-      osc.connect(noteGain);
-      noteGain.connect(gainRef.current);
+      const createOsc = (frequency: number, type: OscType, peak: number, delay: number) => {
+        const osc = audioCtxRef.current!.createOscillator();
+      const g = audioCtxRef.current!.createGain();
+      osc.type = type;
+      osc.frequency.value = frequency;
+      g.gain.setValueAtTime(0, now + delay);
+      g.gain.linearRampToValueAtTime(peak, now + delay + track.attack);
+      g.gain.linearRampToValueAtTime(0, now + delay + noteDur * track.release);
+      osc.connect(g);
+      g.connect(gainRef.current!);
+      osc.start(now + delay);
+      osc.stop(now + delay + noteDur);
+      oscillatorsRef.current.push(osc);
+      };
 
-      osc.start(now);
-      osc.stop(now + track.tempo / 1000);
+      createOsc(freq, track.oscType, 0.6, 0);
+      track.harmony.forEach((mult, i) => {
+        createOsc(freq * mult, track.oscType, 0.25 / (i + 1), 0);
+      });
+
+      if (track.bass) {
+        const bassFreq = track.bass[noteIdxRef.current % track.bass.length];
+        createOsc(bassFreq, "sine", 0.4, 0);
+      }
+
+      oscillatorsRef.current = oscillatorsRef.current.filter((o: OscillatorNode) => {
+        try { return o.context.state !== "closed"; } catch { return false; }
+      });
 
       noteIdxRef.current++;
     };

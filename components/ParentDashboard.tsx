@@ -17,6 +17,7 @@ interface Props {
   spellingCompleted: number;
   logicCompleted: number;
   writingCompleted: number;
+  quickCompleted: number;
   perfectScores: number;
   streak: number;
   stickersCount: number;
@@ -38,6 +39,7 @@ export default function ParentDashboard({
   spellingCompleted,
   logicCompleted,
   writingCompleted,
+  quickCompleted,
   perfectScores,
   streak,
   stickersCount,
@@ -200,6 +202,7 @@ export default function ParentDashboard({
               { label: "Spelling Done", value: spellingCompleted },
               { label: "Logic Done", value: logicCompleted },
               { label: "Writing Done", value: writingCompleted },
+              { label: "Quick Tasks", value: quickCompleted },
             ].map((stat) => (
               <div key={stat.label} className="bg-white rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-gray-800">{stat.value}</p>
