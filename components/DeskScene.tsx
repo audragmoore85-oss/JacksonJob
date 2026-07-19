@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder, PenTool } from "lucide-react";
+import Tooltip from "@/components/Tooltip";
 import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, DeskDecoration, DESK_THEMES, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 
 interface Props {
@@ -151,57 +152,67 @@ export default function DeskScene({
         </div>
         <div className="flex items-center gap-2 md:gap-3">
           {streak > 0 && (
+            <Tooltip text={`Daily streak: ${streak} days!`} side="bottom">
             <div className="flex items-center gap-1 bg-kid-pink/20 rounded-full px-3 py-2 shadow-md">
               <Flame className="w-5 h-5 text-kid-pink" />
               <span className="font-bold text-kid-pink text-sm">{streak}</span>
             </div>
+            </Tooltip>
           )}
-          <button
-            onClick={onOpenShop}
-            className="flex items-center gap-1 bg-white rounded-full px-3 py-2 shadow-md hover:scale-110 transition-transform"
-            title="Decoration Shop"
-          >
-            <ShoppingBag className="w-5 h-5 text-kid-purple" />
-          </button>
-          <button
-            onClick={onOpenReport}
-            className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
-            title="Progress Report"
-          >
-            <FileText className="w-5 h-5 text-kid-blue" />
-          </button>
-          <button
-            onClick={onOpenGallery}
-            className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
-            title="Coworker Gallery"
-          >
-            <Users className="w-5 h-5 text-kid-green" />
-          </button>
-          <button
-            onClick={onOpenParent}
-            className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
-            title="Parent Dashboard"
-          >
-            <Lock className="w-5 h-5 text-kid-purple" />
-          </button>
-          <button
-            onClick={onCoffeeBreak}
-            className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
-            title="Coffee Break"
-          >
-            <Coffee className="w-5 h-5 text-kid-orange" />
-          </button>
+          <Tooltip text="Decoration Shop" side="bottom">
+            <button
+              onClick={onOpenShop}
+              className="flex items-center gap-1 bg-white rounded-full px-3 py-2 shadow-md hover:scale-110 transition-transform"
+            >
+              <ShoppingBag className="w-5 h-5 text-kid-purple" />
+            </button>
+          </Tooltip>
+          <Tooltip text="Progress Report" side="bottom">
+            <button
+              onClick={onOpenReport}
+              className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            >
+              <FileText className="w-5 h-5 text-kid-blue" />
+            </button>
+          </Tooltip>
+          <Tooltip text="Coworker Gallery" side="bottom">
+            <button
+              onClick={onOpenGallery}
+              className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            >
+              <Users className="w-5 h-5 text-kid-green" />
+            </button>
+          </Tooltip>
+          <Tooltip text="Parent Dashboard" side="bottom">
+            <button
+              onClick={onOpenParent}
+              className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            >
+              <Lock className="w-5 h-5 text-kid-purple" />
+            </button>
+          </Tooltip>
+          <Tooltip text="Coffee Break" side="bottom">
+            <button
+              onClick={onCoffeeBreak}
+              className="flex items-center gap-1 bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            >
+              <Coffee className="w-5 h-5 text-kid-orange" />
+            </button>
+          </Tooltip>
+          <Tooltip text={`You have ${stars} stars!`} side="bottom">
           <div className="flex items-center gap-1 bg-white rounded-full px-4 py-2 shadow-md">
             <Star className="w-5 h-5 fill-kid-yellow text-kid-yellow" />
             <span className="font-bold text-gray-700">{stars}</span>
           </div>
-          <button
-            onClick={onReset}
-            className="bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
-            title="Start over"
-          >
-            <RotateCcw className="w-5 h-5 text-gray-600" />
-          </button>
+          </Tooltip>
+          <Tooltip text="Start Over" side="bottom">
+            <button
+              onClick={onReset}
+              className="bg-white rounded-full p-2 shadow-md hover:scale-110 transition-transform"
+            >
+              <RotateCcw className="w-5 h-5 text-gray-600" />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -351,8 +362,8 @@ export default function DeskScene({
             {tasks.map((task, idx) => {
               const Icon = task.icon;
               return (
+                <Tooltip key={task.id} text={task.desc} side="top" delay={300}>
                 <motion.button
-                  key={task.id}
                   initial={{ y: 50, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: idx * 0.15 }}
@@ -379,6 +390,7 @@ export default function DeskScene({
                     </span>
                   </div>
                 </motion.button>
+                </Tooltip>
               );
             })}
           </div>

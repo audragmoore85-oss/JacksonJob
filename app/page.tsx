@@ -24,6 +24,7 @@ import ParentDashboard from "@/components/ParentDashboard";
 import SpaceBackground from "@/components/SpaceBackground";
 import LuckySpin from "@/components/LuckySpin";
 import RewardChest from "@/components/RewardChest";
+import MusicPlayer from "@/components/MusicPlayer";
 
 type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
 type TaskType = "math" | "reading" | "typing" | "spelling" | "logic" | "writing";
@@ -936,6 +937,11 @@ export default function Home() {
           />
         )}
       </AnimatePresence>
+
+      {/* Background Music Player */}
+      {screen !== "welcome" && screen !== "difficulty" && (
+        <MusicPlayer />
+      )}
     </main>
   );
 }
