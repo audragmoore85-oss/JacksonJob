@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder } from "lucide-react";
-import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, DeskDecoration, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
+import { Star, RotateCcw, Phone, BookOpen, Calculator, Keyboard, ShoppingBag, FileText, Flame, Trophy, Users, Lock, Coffee, Folder, PenTool } from "lucide-react";
+import { AgeGroup, DIFFICULTY_CONFIGS, DESK_DECORATIONS, DeskDecoration, DESK_THEMES, ACHIEVEMENTS, AchievementBadge, AVATARS, Avatar, BOSS_PROJECTS, BossProject as BossProjectData, getCurrentSeasonalTheme } from "@/lib/gameData";
 
 interface Props {
   playerName: string;
@@ -11,6 +11,7 @@ interface Props {
   stars: number;
   tasksCompleted: number;
   decorations: string[];
+  currentTheme: string;
   streak: number;
   dailyAvailable: boolean;
   dailyChallengeProgress: string[];
@@ -18,7 +19,7 @@ interface Props {
   bossProject: BossProjectData | null;
   bossThreshold: number;
   bossProjectsDone: string[];
-  onTaskSelect: (task: "math" | "reading" | "typing" | "spelling" | "logic") => void;
+  onTaskSelect: (task: "math" | "reading" | "typing" | "spelling" | "logic" | "writing") => void;
   onOpenShop: () => void;
   onOpenReport: () => void;
   onOpenGallery: () => void;
@@ -37,6 +38,7 @@ export default function DeskScene({
   stars,
   tasksCompleted,
   decorations,
+  currentTheme,
   streak,
   dailyAvailable,
   dailyChallengeProgress,
@@ -103,10 +105,20 @@ export default function DeskScene({
       bgColor: "bg-kid-purple",
       desc: "Solve pattern puzzles!",
     },
+    {
+      id: "writing" as const,
+      label: "Creative Writing",
+      icon: PenTool,
+      emoji: "✍️",
+      color: "kid-pink",
+      bgColor: "bg-kid-pink",
+      desc: "Write your own stories!",
+    },
   ];
 
   const avatarEmoji = AVATARS.find((a: Avatar) => a.id === avatar)?.emoji || "🧑‍💼";
   const seasonalTheme = getCurrentSeasonalTheme();
+  const activeTheme = DESK_THEMES.find((t) => t.id === currentTheme) || DESK_THEMES[0];
 
   const ownedDecorationEmojis = decorations
     .map((id) => DESK_DECORATIONS.find((d: DeskDecoration) => d.id === id)?.emoji)
@@ -117,7 +129,7 @@ export default function DeskScene({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="min-h-screen p-4 md:p-8"
+      className={`min-h-screen p-4 md:p-8 ${activeTheme.bgClass}`}
     >
       {/* Top bar */}
       <div className="flex items-center justify-between mb-6 max-w-5xl mx-auto">

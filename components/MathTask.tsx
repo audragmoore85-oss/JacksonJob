@@ -4,20 +4,23 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Check, X, Star, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
-import { DifficultyConfig, generateMathProblem, getRandomEncouragement } from "@/lib/gameData";
+import { DifficultyConfig, AgeGroup, generateMathProblem, getRandomWordProblem, WordProblem, getRandomEncouragement } from "@/lib/gameData";
 import { playCorrect, playWrong } from "@/lib/sounds";
 
 interface Props {
   config: DifficultyConfig;
+  ageGroup: AgeGroup;
   onComplete: (stars: number) => void;
   onBack: () => void;
 }
 
 const TOTAL_QUESTIONS = 5;
 
-export default function MathTask({ config, onComplete, onBack }: Props) {
+export default function MathTask({ config, ageGroup, onComplete, onBack }: Props) {
   const [questionNum, setQuestionNum] = useState(0);
+  const [isWordProblem, setIsWordProblem] = useState(false);
   const [problem, setProblem] = useState(() => generateMathProblem(config));
+  const [wordProblem, setWordProblem] = useState<WordProblem | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
@@ -31,7 +34,9 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
     setSelected(option);
     setShowResult(true);
 
-    if (option === problem.answer) {
+    const correctAnswer = isWordProblem && wordProblem ? wordProblem.answer : problem.answer;
+
+    if (option === correctAnswer) {
       setCorrectCount((prev: number) => prev + 1);
       setEncouragement(getRandomEncouragement());
       playCorrect();
@@ -49,15 +54,23 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
 
     setTimeout(() => {
       if (questionNum + 1 >= TOTAL_QUESTIONS) {
-        const stars = correctCount + (option === problem.answer ? 1 : 0) >= TOTAL_QUESTIONS
+        const finalCorrect = correctCount + (option === correctAnswer ? 1 : 0);
+        const stars = finalCorrect >= TOTAL_QUESTIONS
           ? 3
-          : correctCount + (option === problem.answer ? 1 : 0) >= 3
+          : finalCorrect >= 3
           ? 2
           : 1;
         onComplete(stars);
       } else {
-        setQuestionNum((prev: number) => prev + 1);
-        setProblem(generateMathProblem(config));
+        const nextNum = questionNum + 1;
+        const willBeWordProblem = nextNum % 3 === 2;
+        setIsWordProblem(willBeWordProblem);
+        if (willBeWordProblem) {
+          setWordProblem(getRandomWordProblem(ageGroup));
+        } else {
+          setProblem(generateMathProblem(config));
+        }
+        setQuestionNum(nextNum);
         setSelected(null);
         setShowResult(false);
         setShowHint(false);
@@ -120,9 +133,11 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
             transition={{ duration: 2, repeat: Infinity }}
             className="text-6xl mb-2"
           >
-            🔢
+            {isWordProblem && wordProblem ? wordProblem.emoji : "🔢"}
           </motion.div>
-          <h2 className="text-2xl font-bold text-kid-orange">Math Mission</h2>
+          <h2 className="text-2xl font-bold text-kid-orange">
+            {isWordProblem ? "Word Problem!" : "Math Mission"}
+          </h2>
           <p className="text-gray-500 text-sm">Question {questionNum + 1} of {TOTAL_QUESTIONS}</p>
         </div>
 
@@ -136,9 +151,15 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
             className="text-center mb-8"
           >
             <div className="bg-kid-cream rounded-2xl py-8 px-4 mb-6">
-              <p className="text-5xl md:text-6xl font-bold text-gray-800">
-                {problem.question} = ?
-              </p>
+              {isWordProblem && wordProblem ? (
+                <p className="text-xl md:text-2xl font-bold text-gray-800 leading-relaxed">
+                  {wordProblem.story}
+                </p>
+              ) : (
+                <p className="text-5xl md:text-6xl font-bold text-gray-800">
+                  {problem.question} = ?
+                </p>
+              )}
             </div>
 
             {/* Hint */}
@@ -152,7 +173,9 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
                 <div className="flex items-start gap-2">
                   <Lightbulb className="w-5 h-5 text-kid-yellow flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-gray-700">
-                    {problem.operation === "add"
+                    {isWordProblem && wordProblem
+                      ? wordProblem.hint
+                      : problem.operation === "add"
                       ? "Try counting up! Start from the first number and count forward by the second number."
                       : problem.operation === "subtract"
                       ? "Try counting down! Start from the first number and count backward by the second number."
@@ -167,8 +190,9 @@ export default function MathTask({ config, onComplete, onBack }: Props) {
 
             {/* Answer Options */}
             <div className="grid grid-cols-2 gap-4">
-              {problem.options.map((option, idx) => {
-                const isCorrect = option === problem.answer;
+              {(isWordProblem && wordProblem ? wordProblem.options : problem.options).map((option, idx) => {
+                const correctAnswer = isWordProblem && wordProblem ? wordProblem.answer : problem.answer;
+                const isCorrect = option === correctAnswer;
                 const isSelected = option === selected;
                 let buttonClass = "bg-white border-kid-blue text-gray-800 hover:bg-kid-blue hover:text-white";
 

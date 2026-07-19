@@ -15,6 +15,7 @@ interface Props {
   typingCompleted: number;
   spellingCompleted: number;
   logicCompleted: number;
+  writingCompleted: number;
   perfectScores: number;
   streak: number;
   stickersCount: number;
@@ -66,6 +67,7 @@ export default function ProgressReport({
   typingCompleted,
   spellingCompleted,
   logicCompleted,
+  writingCompleted,
   perfectScores,
   streak,
   stickersCount,
@@ -80,9 +82,10 @@ export default function ProgressReport({
     { label: "Typing", value: typingCompleted, emoji: "⌨️", color: "kid-blue" },
     { label: "Spelling", value: spellingCompleted, emoji: "📝", color: "kid-orange" },
     { label: "Logic", value: logicCompleted, emoji: "📁", color: "kid-purple" },
+    { label: "Writing", value: writingCompleted, emoji: "✍️", color: "kid-pink" },
   ];
 
-  const maxTask = Math.max(mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, 1);
+  const maxTask = Math.max(mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, 1);
   const achievementPct = Math.round((unlockedAchievements.length / ACHIEVEMENTS.length) * 100);
 
   return (

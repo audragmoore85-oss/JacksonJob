@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Check, X, Lightbulb } from "lucide-react";
-import { AgeGroup, DifficultyConfig, LOGIC_PUZZLES, LogicPuzzle, SequencePuzzle, OddOneOutPuzzle, CategoryPuzzle, SizeOrderPuzzle } from "@/lib/gameData";
+import { AgeGroup, DifficultyConfig, LOGIC_PUZZLES, LogicPuzzle, SequencePuzzle, OddOneOutPuzzle, CategoryPuzzle, SizeOrderPuzzle, MemoryPuzzle } from "@/lib/gameData";
 import { playCorrect, playWrong, playClick } from "@/lib/sounds";
 
 interface Props {
@@ -18,6 +18,7 @@ const PUZZLE_LABELS: Record<LogicPuzzle["type"], { title: string; emoji: string;
   oddOneOut: { title: "Odd one out!", emoji: "🔍", instruction: "Which one doesn't belong with the others?" },
   category: { title: "Sort it out!", emoji: "🗂️", instruction: "Which category does this item belong to?" },
   sizeOrder: { title: "Size order!", emoji: "📐", instruction: "Tap the items from smallest to biggest!" },
+  memory: { title: "Memory Match!", emoji: "🧠", instruction: "Flip the cards and find the matching pairs!" },
 };
 
 export default function LogicTask({ ageGroup, onComplete, onBack }: Props) {
@@ -28,6 +29,9 @@ export default function LogicTask({ ageGroup, onComplete, onBack }: Props) {
   const [isCorrect, setIsCorrect] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(-1);
   const [sizeOrderArr, setSizeOrderArr] = useState<number[]>([]);
+  const [memoryFlipped, setMemoryFlipped] = useState<number[]>([]);
+  const [memoryMatched, setMemoryMatched] = useState<number[]>([]);
+  const [memoryMoves, setMemoryMoves] = useState(0);
 
   const currentPuzzle: LogicPuzzle = puzzles[currentIdx];
   const label = PUZZLE_LABELS[currentPuzzle.type];
@@ -80,10 +84,52 @@ export default function LogicTask({ ageGroup, onComplete, onBack }: Props) {
     setShowResult(true);
   };
 
+  const memoryCards = useMemo<{ id: number; pairIndex: number; emoji: string; name: string }[]>(() => {
+    if (currentPuzzle.type !== "memory") return [];
+    const p = currentPuzzle as MemoryPuzzle;
+    const deck = [...p.pairs, ...p.pairs].map((pair, i) => ({
+      id: i,
+      pairIndex: i % p.pairs.length,
+      emoji: pair.emoji,
+      name: pair.name,
+    }));
+    return deck.sort(() => Math.random() - 0.5);
+  }, [currentPuzzle]);
+
+  const handleMemoryClick = (cardId: number) => {
+    if (showResult || memoryMatched.includes(cardId) || memoryFlipped.includes(cardId)) return;
+    const newFlipped = [...memoryFlipped, cardId];
+    setMemoryFlipped(newFlipped);
+
+    if (newFlipped.length === 2) {
+      setMemoryMoves((prev: number) => prev + 1);
+      const [a, b] = newFlipped;
+      if (memoryCards[a].pairIndex === memoryCards[b].pairIndex) {
+        const newMatched = [...memoryMatched, a, b];
+        setMemoryMatched(newMatched);
+        setMemoryFlipped([]);
+        playCorrect();
+        if (newMatched.length === memoryCards.length) {
+          const p = currentPuzzle as MemoryPuzzle;
+          const perfect = memoryMoves <= p.pairs.length;
+          setIsCorrect(perfect);
+          if (perfect) setCorrectCount((prev: number) => prev + 1);
+          setShowResult(true);
+        }
+      } else {
+        playWrong();
+        setTimeout(() => setMemoryFlipped([]), 1000);
+      }
+    }
+  };
+
   const handleNext = () => {
     setShowResult(false);
     setSelectedIdx(-1);
     setSizeOrderArr([]);
+    setMemoryFlipped([]);
+    setMemoryMatched([]);
+    setMemoryMoves(0);
     if (currentIdx + 1 < puzzles.length) {
       setCurrentIdx(currentIdx + 1);
     } else {
@@ -310,6 +356,65 @@ export default function LogicTask({ ageGroup, onComplete, onBack }: Props) {
     );
   };
 
+  const renderMemory = (_puzzle: MemoryPuzzle) => {
+    if (memoryCards.length === 0) return null;
+    return (
+      <>
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+          {memoryCards.map((card, idx) => {
+            const isFlipped = memoryFlipped.includes(idx) || memoryMatched.includes(idx);
+            const isMatched = memoryMatched.includes(idx);
+            return (
+              <motion.button
+                key={card.id}
+                whileHover={!isFlipped && !showResult ? { scale: 1.05 } : {}}
+                whileTap={!isFlipped && !showResult ? { scale: 0.95 } : {}}
+                disabled={isFlipped || showResult}
+                onClick={() => handleMemoryClick(idx)}
+                className={`aspect-square rounded-2xl border-4 flex items-center justify-center text-4xl font-bold transition-all ${
+                  isMatched
+                    ? "bg-kid-green/20 border-kid-green"
+                    : isFlipped
+                    ? "bg-kid-yellow/20 border-kid-yellow"
+                    : "bg-kid-purple/10 border-kid-purple/30 hover:border-kid-purple"
+                }`}
+                style={{ perspective: 1000 }}
+              >
+                <motion.div
+                  animate={{ rotateY: isFlipped ? 0 : 180 }}
+                  transition={{ duration: 0.3 }}
+                  className={isFlipped ? "" : "opacity-0"}
+                >
+                  {isFlipped ? card.emoji : "?"}
+                </motion.div>
+                {!isFlipped && (
+                  <span className="text-3xl">❓</span>
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-center gap-4 mb-2">
+          <span className="text-sm font-bold text-gray-500">
+            Moves: {memoryMoves}
+          </span>
+          <span className="text-sm font-bold text-gray-500">
+            Pairs: {memoryMatched.length / 2} / {memoryCards.length / 2}
+          </span>
+        </div>
+
+        {showResult && (
+          <div className="bg-kid-green/10 rounded-xl p-3 border-2 border-kid-green/30 mb-2 text-center">
+            <p className="text-sm text-gray-600">
+              {isCorrect ? "Perfect memory! 🧠✨" : `Done in ${memoryMoves} moves! Good job!`}
+            </p>
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 100 }}
@@ -357,10 +462,11 @@ export default function LogicTask({ ageGroup, onComplete, onBack }: Props) {
               {label.instruction}
             </p>
 
-            {currentPuzzle.type === "sequence" && renderSequence(currentPuzzle)}
-            {currentPuzzle.type === "oddOneOut" && renderOddOneOut(currentPuzzle)}
-            {currentPuzzle.type === "category" && renderCategory(currentPuzzle)}
-            {currentPuzzle.type === "sizeOrder" && renderSizeOrder(currentPuzzle)}
+            {currentPuzzle.type === "sequence" && renderSequence(currentPuzzle as SequencePuzzle)}
+            {currentPuzzle.type === "oddOneOut" && renderOddOneOut(currentPuzzle as OddOneOutPuzzle)}
+            {currentPuzzle.type === "category" && renderCategory(currentPuzzle as CategoryPuzzle)}
+            {currentPuzzle.type === "sizeOrder" && renderSizeOrder(currentPuzzle as SizeOrderPuzzle)}
+            {currentPuzzle.type === "memory" && renderMemory(currentPuzzle as MemoryPuzzle)}
 
             {showResult && (
               <motion.div

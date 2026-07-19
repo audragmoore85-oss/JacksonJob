@@ -1,17 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, CheckCircle, Lock } from "lucide-react";
-import { DESK_DECORATIONS } from "@/lib/gameData";
+import { ArrowLeft, Star, CheckCircle, Lock, Palette } from "lucide-react";
+import { DESK_DECORATIONS, DESK_THEMES, DeskTheme } from "@/lib/gameData";
 
 interface Props {
   stars: number;
   ownedDecorations: string[];
+  ownedThemes: string[];
+  currentTheme: string;
   onBuy: (decorationId: string, cost: number) => void;
+  onBuyTheme: (themeId: string, cost: number) => void;
+  onSelectTheme: (themeId: string) => void;
   onBack: () => void;
 }
 
-export default function DeskShop({ stars, ownedDecorations, onBuy, onBack }: Props) {
+export default function DeskShop({ stars, ownedDecorations, ownedThemes, currentTheme, onBuy, onBuyTheme, onSelectTheme, onBack }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, x: 100 }}
@@ -87,6 +91,71 @@ export default function DeskShop({ stars, ownedDecorations, onBuy, onBack }: Pro
               </motion.div>
             );
           })}
+        </div>
+
+        {/* Desk Themes Section */}
+        <div className="mb-6">
+          <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
+            <Palette className="w-5 h-5 text-kid-purple" />
+            Desk Themes
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {DESK_THEMES.map((theme: DeskTheme, idx: number) => {
+              const owned = theme.id === "default" || ownedThemes.includes(theme.id);
+              const isActive = currentTheme === theme.id;
+              const canAfford = stars >= theme.cost;
+              return (
+                <motion.div
+                  key={theme.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`rounded-2xl p-4 text-center border-4 transition-all ${
+                    isActive
+                      ? "bg-kid-purple/10 border-kid-purple ring-2 ring-kid-purple/30"
+                      : owned
+                      ? "bg-white border-kid-green/40 hover:scale-105 cursor-pointer"
+                      : canAfford
+                      ? "bg-white border-kid-yellow hover:scale-105 cursor-pointer"
+                      : "bg-gray-50 border-gray-200 opacity-60"
+                  }`
+                  }
+                  onClick={() => {
+                    if (owned && !isActive) onSelectTheme(theme.id);
+                    else if (!owned && canAfford) onBuyTheme(theme.id, theme.cost);
+                  }}
+                >
+                  <div className={`rounded-xl p-4 mb-2 ${theme.bgClass}`}>
+                    <motion.div
+                      animate={isActive ? { scale: [1, 1.1, 1] } : { y: [0, -5, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: idx * 0.1 }}
+                      className="text-4xl"
+                    >
+                      {theme.emoji}
+                    </motion.div>
+                  </div>
+                  <h3 className="font-bold text-gray-800 text-sm">{theme.name}</h3>
+                  <p className="text-xs text-gray-500 mb-2">{theme.description}</p>
+                  {isActive ? (
+                    <div className="flex items-center justify-center gap-1 text-kid-purple font-bold text-sm">
+                      <CheckCircle className="w-4 h-4" />
+                      Active
+                    </div>
+                  ) : owned ? (
+                    <div className="flex items-center justify-center gap-1 text-kid-green font-bold text-sm">
+                      <CheckCircle className="w-4 h-4" />
+                      Tap to use
+                    </div>
+                  ) : (
+                    <div className={`flex items-center justify-center gap-1 font-bold text-sm ${canAfford ? "text-kid-orange" : "text-gray-400"}`}>
+                      {canAfford ? <Star className="w-4 h-4 fill-kid-yellow text-kid-yellow" /> : <Lock className="w-4 h-4" />}
+                      {theme.cost} stars
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </motion.div>
     </motion.div>

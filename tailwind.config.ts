@@ -28,6 +28,13 @@ const config: Config = {
       `from-${c}`,
       `to-${c}`,
     ]),
+    "bg-gradient-to-b",
+    "from-amber-50", "to-orange-50",
+    "from-indigo-900", "via-purple-900", "to-blue-900",
+    "from-green-700", "via-green-600", "to-emerald-800",
+    "from-cyan-400", "via-blue-500", "to-blue-700",
+    "from-pink-200", "via-purple-200", "to-pink-300",
+    "from-red-700", "via-orange-700", "to-yellow-800",
   ],
   theme: {
     extend: {

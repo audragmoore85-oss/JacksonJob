@@ -122,9 +122,9 @@ export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
           goodReply: "Hello! It is nice to hear from you. I am glad you like your desk. Welcome to the team!",
           badReply: "Oh no! Your email is hard to read. Do you have a pet dinosaur at home? Please fix your spelling and send again!",
         },
-        subject: "Hello!",
-        userTemplate: "Hi Ms. Smith. I am at my desk. I like to work here. The work is fun. Thank you. From, me.",
-        coworkerReply: "You are welcome! What is your favorite thing to do at work?",
+        subject: "Thank You for Helping Me",
+        userTemplate: "Hi Ms. Smith. Thank you for helping me today. You showed me where to sit. I like my desk. The work is fun. From, me.",
+        coworkerReply: "You are welcome! I am glad you like your desk. What is your favorite thing to do at work?",
         userReplyTemplate: "I like to read and do math. Math is my favorite. It is fun. From, me.",
         coworkerFinalReply: "Math is my favorite too! You are doing a great job. Keep learning!",
       },
@@ -136,8 +136,8 @@ export const DIFFICULTY_CONFIGS: Record<AgeGroup, DifficultyConfig> = {
           goodReply: "Hi there! It sounds like you had a great day! I am happy for you. See you soon!",
           badReply: "Wait, what? I think a monkey ate your email! How many bananas do you have? Please check your spelling and try again!",
         },
-        subject: "My Day",
-        userTemplate: "Hi Mr. Tom. I had a good day. I did all my jobs. I like my desk. It is a good day. From, me.",
+        subject: "My Day at Work",
+        userTemplate: "Hi Mr. Tom. I had a good day at work. I did all my jobs. I read a book and did math. Thank you for the mail today. From, me.",
         coworkerReply: "That is wonderful! What was your favorite job today?",
         userReplyTemplate: "My favorite job was reading. I read a big book. It was about a dog. From, me.",
         coworkerFinalReply: "A book about a dog sounds great! Thank you for sharing. See you tomorrow!",
@@ -396,6 +396,43 @@ export function generateMathProblem(config: DifficultyConfig): {
   return { question, answer, options: shuffled, operation: op };
 }
 
+export interface WordProblem {
+  story: string;
+  answer: number;
+  options: number[];
+  hint: string;
+  emoji: string;
+}
+
+export const WORD_PROBLEMS: Record<AgeGroup, WordProblem[]> = {
+  "4-6": [
+    { story: "You have 3 apples. Your friend gives you 2 more. How many apples do you have now?", answer: 5, options: [4, 5, 6, 7], hint: "Count all the apples together!", emoji: "🍎" },
+    { story: "There are 5 birds on a tree. 2 fly away. How many birds are left?", answer: 3, options: [2, 3, 4, 5], hint: "Take away the birds that flew away!", emoji: "🐦" },
+    { story: "You have 4 cookies. You eat 1. How many cookies are left?", answer: 3, options: [2, 3, 4, 5], hint: "Subtract the cookie you ate!", emoji: "🍪" },
+    { story: "There are 2 cats and 3 dogs at the park. How many animals are there?", answer: 5, options: [4, 5, 6, 7], hint: "Add the cats and dogs together!", emoji: "🐱" },
+    { story: "You have 6 crayons. You lose 2. How many crayons do you have left?", answer: 4, options: [3, 4, 5, 6], hint: "Subtract the lost crayons!", emoji: "🖍️" },
+  ],
+  "7-9": [
+    { story: "Sarah has 12 stickers. She gives 4 to her friend. How many stickers does Sarah have left?", answer: 8, options: [6, 7, 8, 9], hint: "Subtract the stickers she gave away!", emoji: "⭐" },
+    { story: "A book has 8 chapters. Each chapter has 3 pages. How many pages are in the book?", answer: 24, options: [21, 24, 27, 30], hint: "Multiply chapters by pages!", emoji: "📚" },
+    { story: "Tom has 15 marbles. He buys 7 more. How many marbles does Tom have now?", answer: 22, options: [20, 21, 22, 23], hint: "Add the new marbles!", emoji: "🔮" },
+    { story: "There are 20 students in a class. They sit in rows of 4. How many rows are there?", answer: 5, options: [4, 5, 6, 7], hint: "Divide students by row size!", emoji: "👨‍🎓" },
+    { story: "Emma reads 6 pages every day for 5 days. How many pages did she read in total?", answer: 30, options: [25, 28, 30, 35], hint: "Multiply pages per day by days!", emoji: "📖" },
+  ],
+  "10-12": [
+    { story: "A store sells pencils for $2 each. If you buy 12 pencils, how much do you spend?", answer: 24, options: [20, 22, 24, 26], hint: "Multiply price by quantity!", emoji: "✏️" },
+    { story: "A pizza is cut into 8 slices. 3 friends share it equally. How many slices does each friend get?", answer: 3, options: [2, 3, 4, 5], hint: "Divide slices by friends — but think about remainders!", emoji: "🍕" },
+    { story: "You earn $5 per hour working. You worked 6 hours on Saturday and 4 hours on Sunday. How much did you earn in total?", answer: 50, options: [40, 45, 50, 55], hint: "Add the hours first, then multiply by pay!", emoji: "💰" },
+    { story: "A garden has 15 rows with 7 plants in each row. How many plants are in the garden?", answer: 105, options: [98, 105, 112, 120], hint: "Multiply rows by plants per row!", emoji: "🌱" },
+    { story: "A library has 144 books. They are split equally onto 6 shelves. How many books are on each shelf?", answer: 24, options: [22, 24, 26, 28], hint: "Divide total books by shelves!", emoji: "📚" },
+  ],
+};
+
+export function getRandomWordProblem(ageGroup: AgeGroup): WordProblem {
+  const problems = WORD_PROBLEMS[ageGroup];
+  return problems[Math.floor(Math.random() * problems.length)];
+}
+
 export const STICKERS = [
   "⭐", "🌟", "🏆", "🎖️", "🌈", "🎈", "🎨", "🚀",
   "📚", "✏️", "🔢", "⌨️", "🧠", "💡", "🎯", "👑",
@@ -430,6 +467,24 @@ export const DESK_DECORATIONS: DeskDecoration[] = [
   { id: "rocket", name: "Mini Rocket", emoji: "🚀", cost: 12, description: "Reach for the stars!" },
 ];
 
+export interface DeskTheme {
+  id: string;
+  name: string;
+  emoji: string;
+  cost: number;
+  bgClass: string;
+  description: string;
+}
+
+export const DESK_THEMES: DeskTheme[] = [
+  { id: "default", name: "Classic Office", emoji: "🏢", cost: 0, bgClass: "bg-gradient-to-b from-amber-50 to-orange-50", description: "The default office look" },
+  { id: "space", name: "Space Station", emoji: "🚀", cost: 15, bgClass: "bg-gradient-to-b from-indigo-900 via-purple-900 to-blue-900", description: "Work among the stars!" },
+  { id: "jungle", name: "Jungle Hut", emoji: "🌿", cost: 12, bgClass: "bg-gradient-to-b from-green-700 via-green-600 to-emerald-800", description: "A wild workspace!" },
+  { id: "underwater", name: "Underwater Lab", emoji: "🐠", cost: 15, bgClass: "bg-gradient-to-b from-cyan-400 via-blue-500 to-blue-700", description: "Deep sea office!" },
+  { id: "candy", name: "Candy Land", emoji: "🍭", cost: 10, bgClass: "bg-gradient-to-b from-pink-200 via-purple-200 to-pink-300", description: "A sweet workspace!" },
+  { id: "volcano", name: "Volcano Base", emoji: "🌋", cost: 20, bgClass: "bg-gradient-to-b from-red-700 via-orange-700 to-yellow-800", description: "Work near the lava!" },
+];
+
 export interface AchievementBadge {
   id: string;
   name: string;
@@ -446,6 +501,7 @@ export interface AchievementStats {
   typingCompleted: number;
   spellingCompleted: number;
   logicCompleted: number;
+  writingCompleted: number;
   perfectScores: number;
   streak: number;
   stickersCollected: number;
@@ -466,6 +522,7 @@ export const ACHIEVEMENTS: AchievementBadge[] = [
   { id: "collector", name: "Collector", emoji: "🎨", description: "Collect 10 stickers", check: (s) => s.stickersCollected >= 10 },
   { id: "speller", name: "Word Master", emoji: "📝", description: "Complete 5 spelling tasks", check: (s) => s.spellingCompleted >= 5 },
   { id: "logician", name: "Logic Pro", emoji: "🧩", description: "Complete 5 logic tasks", check: (s) => s.logicCompleted >= 5 },
+  { id: "author", name: "Young Author", emoji: "✍️", description: "Complete 5 writing tasks", check: (s) => s.writingCompleted >= 5 },
 ];
 
 export function getTodayString(): string {
@@ -592,7 +649,12 @@ export interface SizeOrderPuzzle {
   items: { emoji: string; name: string; size: number }[];
 }
 
-export type LogicPuzzle = SequencePuzzle | OddOneOutPuzzle | CategoryPuzzle | SizeOrderPuzzle;
+export interface MemoryPuzzle {
+  type: "memory";
+  pairs: { emoji: string; name: string }[];
+}
+
+export type LogicPuzzle = SequencePuzzle | OddOneOutPuzzle | CategoryPuzzle | SizeOrderPuzzle | MemoryPuzzle;
 
 export const LOGIC_PUZZLES: Record<AgeGroup, LogicPuzzle[]> = {
   "4-6": [
@@ -608,6 +670,7 @@ export const LOGIC_PUZZLES: Record<AgeGroup, LogicPuzzle[]> = {
     { type: "category", item: "🐶", categories: [{ name: "Fruit", emoji: "🍎" }, { name: "Animal", emoji: "🐶" }, { name: "Vehicle", emoji: "🚗" }], correctCategory: 1 },
     { type: "sequence", sequence: ["🔺", "🔻", "🔺", "🔻", "🔺"], answer: "🔻", options: ["🔺", "🔻", "⭕"], patternType: "shape" },
     { type: "sizeOrder", items: [{ emoji: "🌱", name: "Seed", size: 1 }, { emoji: "🌿", name: "Sprout", size: 2 }, { emoji: "🌳", name: "Tree", size: 3 }] },
+    { type: "memory", pairs: [{ emoji: "🍎", name: "Apple" }, { emoji: "🍌", name: "Banana" }, { emoji: "🍇", name: "Grapes" }] },
   ],
   "7-9": [
     { type: "sequence", sequence: [2, 4, 8, 16, 32], answer: 64, options: [48, 64, 80], patternType: "number" },
@@ -622,6 +685,7 @@ export const LOGIC_PUZZLES: Record<AgeGroup, LogicPuzzle[]> = {
     { type: "category", item: "🎹", categories: [{ name: "Tool", emoji: "🔧" }, { name: "Instrument", emoji: "🎵" }, { name: "Food", emoji: "🍔" }], correctCategory: 1 },
     { type: "sequence", sequence: [5, 10, 15, 20, 25], answer: 30, options: [28, 30, 35], patternType: "number" },
     { type: "sizeOrder", items: [{ emoji: "💧", name: "Drop", size: 1 }, { emoji: "🥤", name: "Cup", size: 2 }, { emoji: "🪣", name: "Bucket", size: 3 }, { emoji: "🏊", name: "Pool", size: 4 }] },
+    { type: "memory", pairs: [{ emoji: "🚗", name: "Car" }, { emoji: "✈️", name: "Plane" }, { emoji: "🚢", name: "Ship" }, { emoji: "🚂", name: "Train" }] },
   ],
   "10-12": [
     { type: "sequence", sequence: [1, 4, 9, 16, 25], answer: 36, options: [30, 36, 42], patternType: "number" },
@@ -636,8 +700,45 @@ export const LOGIC_PUZZLES: Record<AgeGroup, LogicPuzzle[]> = {
     { type: "category", item: "🏛️", categories: [{ name: "Nature", emoji: "🌿" }, { name: "Building", emoji: "🏗️" }, { name: "Vehicle", emoji: "🚗" }], correctCategory: 1 },
     { type: "sequence", sequence: [100, 90, 80, 70, 60], answer: 50, options: [45, 50, 55], patternType: "number" },
     { type: "sizeOrder", items: [{ emoji: "🤏", name: "Pinch", size: 1 }, { emoji: "✋", name: "Hand", size: 2 }, { emoji: "🧍", name: "Person", size: 3 }, { emoji: "🏠", name: "House", size: 4 }, { emoji: "🏙️", name: "City", size: 5 }] },
+    { type: "memory", pairs: [{ emoji: "🌍", name: "Earth" }, { emoji: "🔴", name: "Mars" }, { emoji: "🪐", name: "Saturn" }, { emoji: "🌕", name: "Moon" }, { emoji: "⭐", name: "Star" }] },
   ],
 };
+
+// ==================== WRITING PROMPTS ====================
+
+export interface WritingPrompt {
+  id: string;
+  emoji: string;
+  picture: string;
+  title: string;
+  prompt: string;
+  minWords: number;
+  minSentences: number;
+  wordBank: string[];
+}
+
+export const WRITING_PROMPTS: Record<AgeGroup, WritingPrompt[]> = {
+  "4-6": [
+    { id: "cat-day", emoji: "🐱", picture: "🐱🌞", title: "My Cat's Sunny Day", prompt: "Look at the cat! Write a story about what the cat does today.", minWords: 5, minSentences: 1, wordBank: ["cat", "sun", "play", "eat", "sleep", "happy", "run", "jump"] },
+    { id: "space-trip", emoji: "🚀", picture: "🚀🌙⭐", title: "Trip to the Moon", prompt: "Write about a trip to the moon. What do you see?", minWords: 5, minSentences: 1, wordBank: ["moon", "star", "fly", "rocket", "big", "fun", "up", "space"] },
+    { id: "magic-tree", emoji: "🌳", picture: "🌳✨🍎", title: "The Magic Tree", prompt: "This tree has magic apples! Write a story about it.", minWords: 5, minSentences: 1, wordBank: ["tree", "apple", "magic", "eat", "red", "big", "yummy", "grow"] },
+  ],
+  "7-9": [
+    { id: "lost-dog", emoji: "🐶", picture: "🐶🗺️🏠", title: "The Lost Puppy", prompt: "Write a story about a puppy who gets lost and tries to find its way home.", minWords: 20, minSentences: 3, wordBank: ["puppy", "lost", "scared", "brave", "friend", "home", "found", "happy", "road", "help"] },
+    { id: "island-adventure", emoji: "🏝️", picture: "🏝️🏴‍☠️💎", title: "Island Adventure", prompt: "You discover a mysterious island. Write about what you find there!", minWords: 20, minSentences: 3, wordBank: ["island", "treasure", "map", "adventure", "explore", "jungle", "cave", "gold", "exciting", "discover"] },
+    { id: "robot-friend", emoji: "🤖", picture: "🤖🎒📚", title: "My Robot Friend", prompt: "Write a story about a robot who goes to school with you.", minWords: 20, minSentences: 3, wordBank: ["robot", "school", "learn", "friend", "smart", "funny", "help", "math", "read", "play"] },
+  ],
+  "10-12": [
+    { id: "time-travel", emoji: "⏰", picture: "⏰🦕🏛️", title: "Time Traveler", prompt: "You find a watch that takes you back in time. Write about where you go and what happens.", minWords: 40, minSentences: 5, wordBank: ["time", "travel", "past", "future", "ancient", "history", "adventure", "danger", "discovery", "return"] },
+    { id: "super-power", emoji: "🦸", picture: "🦸💨🏙️", title: "If I Had a Superpower", prompt: "If you could have any superpower, what would it be? Write a story about how you'd use it.", minWords: 40, minSentences: 5, wordBank: ["power", "super", "hero", "city", "save", "strong", "fast", "invisible", "fly", "help", "villain", "rescue"] },
+    { id: "dream-city", emoji: "🏙️", picture: "🏙️🌈🚀", title: "My Dream City", prompt: "Design your perfect city. Describe what makes it special and who lives there.", minWords: 40, minSentences: 5, wordBank: ["city", "build", "park", "school", "home", "friend", "clean", "beautiful", "modern", "community", "green", "safe"] },
+  ],
+};
+
+export function getRandomWritingPrompt(ageGroup: AgeGroup): WritingPrompt {
+  const prompts = WRITING_PROMPTS[ageGroup];
+  return prompts[Math.floor(Math.random() * prompts.length)];
+}
 
 // ==================== AVATARS ====================
 

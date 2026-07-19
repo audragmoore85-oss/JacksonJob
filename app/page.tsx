@@ -12,6 +12,7 @@ import ReadingTask from "@/components/ReadingTask";
 import TypingTask from "@/components/TypingTask";
 import SpellingTask from "@/components/SpellingTask";
 import LogicTask from "@/components/LogicTask";
+import WritingTask from "@/components/WritingTask";
 import StickerBoard from "@/components/StickerBoard";
 import DeskShop from "@/components/DeskShop";
 import ProgressReport from "@/components/ProgressReport";
@@ -21,8 +22,8 @@ import CoworkerGallery from "@/components/CoworkerGallery";
 import CoffeeBreak from "@/components/CoffeeBreak";
 import ParentDashboard from "@/components/ParentDashboard";
 
-type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
-type TaskType = "math" | "reading" | "typing" | "spelling" | "logic";
+type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
+type TaskType = "math" | "reading" | "typing" | "spelling" | "logic" | "writing";
 
 interface PlayerProfile {
   playerName: string;
@@ -32,11 +33,14 @@ interface PlayerProfile {
   stars: number;
   tasksCompleted: number;
   decorations: string[];
+  ownedThemes: string[];
+  currentTheme: string;
   mathCompleted: number;
   readingCompleted: number;
   typingCompleted: number;
   spellingCompleted: number;
   logicCompleted: number;
+  writingCompleted: number;
   perfectScores: number;
   lastChallengeDate: string | null;
   streak: number;
@@ -70,11 +74,14 @@ function loadProfiles(): Record<string, PlayerProfile> {
             stars: oldData.stars || 0,
             tasksCompleted: oldData.tasksCompleted || 0,
             decorations: [],
+            ownedThemes: [],
+            currentTheme: "default",
             mathCompleted: 0,
             readingCompleted: 0,
             typingCompleted: 0,
             spellingCompleted: 0,
             logicCompleted: 0,
+            writingCompleted: 0,
             perfectScores: 0,
             lastChallengeDate: null,
             streak: 0,
@@ -125,11 +132,14 @@ export default function Home() {
   const [savedProfiles, setSavedProfiles] = useState<Record<string, PlayerProfile>>({});
   const [avatar, setAvatar] = useState<string>(AVATARS[0].id);
   const [decorations, setDecorations] = useState<string[]>([]);
+  const [ownedThemes, setOwnedThemes] = useState<string[]>([]);
+  const [currentTheme, setCurrentTheme] = useState("default");
   const [mathCompleted, setMathCompleted] = useState(0);
   const [readingCompleted, setReadingCompleted] = useState(0);
   const [typingCompleted, setTypingCompleted] = useState(0);
   const [spellingCompleted, setSpellingCompleted] = useState(0);
   const [logicCompleted, setLogicCompleted] = useState(0);
+  const [writingCompleted, setWritingCompleted] = useState(0);
   const [perfectScores, setPerfectScores] = useState(0);
   const [lastChallengeDate, setLastChallengeDate] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
@@ -161,11 +171,14 @@ export default function Home() {
         stars,
         tasksCompleted,
         decorations,
+        ownedThemes,
+        currentTheme,
         mathCompleted,
         readingCompleted,
         typingCompleted,
         spellingCompleted,
         logicCompleted,
+        writingCompleted,
         perfectScores,
         lastChallengeDate,
         streak,
@@ -178,7 +191,7 @@ export default function Home() {
       });
       setSavedProfiles(loadProfiles());
     }
-  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet]);
+  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, ownedThemes, currentTheme, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet]);
 
   useEffect(() => {
     if (screen === "celebration" && pendingSticker) {
@@ -204,11 +217,14 @@ export default function Home() {
     setStars(profile.stars || 0);
     setTasksCompleted(profile.tasksCompleted || 0);
     setDecorations(profile.decorations || []);
+    setOwnedThemes(profile.ownedThemes || []);
+    setCurrentTheme(profile.currentTheme || "default");
     setMathCompleted(profile.mathCompleted || 0);
     setReadingCompleted(profile.readingCompleted || 0);
     setTypingCompleted(profile.typingCompleted || 0);
     setSpellingCompleted(profile.spellingCompleted || 0);
     setLogicCompleted(profile.logicCompleted || 0);
+    setWritingCompleted(profile.writingCompleted || 0);
     setPerfectScores(profile.perfectScores || 0);
     setLastChallengeDate(profile.lastChallengeDate || null);
     setStreak(calculateStreak(profile.lastChallengeDate || null, profile.streak || 0));
@@ -252,6 +268,7 @@ export default function Home() {
     if (taskType === "typing") setTypingCompleted((prev: number) => prev + 1);
     if (taskType === "spelling") setSpellingCompleted((prev: number) => prev + 1);
     if (taskType === "logic") setLogicCompleted((prev: number) => prev + 1);
+    if (taskType === "writing") setWritingCompleted((prev: number) => prev + 1);
     if (earnedStarsCount === 3) setPerfectScores((prev: number) => prev + 1);
 
     if (isDailyChallenge && (taskType === "math" || taskType === "reading" || taskType === "typing") && !dailyChallengeProgress.includes(taskType)) {
@@ -290,6 +307,7 @@ export default function Home() {
       typingCompleted,
       spellingCompleted,
       logicCompleted,
+      writingCompleted,
       perfectScores,
       streak,
       stickersCollected: stickers.length + (pendingSticker ? 1 : 0),
@@ -312,6 +330,20 @@ export default function Home() {
       setDecorations((prev: string[]) => [...prev, decorationId]);
       playClick();
     }
+  };
+
+  const handleBuyTheme = (themeId: string, cost: number) => {
+    if (stars >= cost && !ownedThemes.includes(themeId)) {
+      setStars((prev: number) => prev - cost);
+      setOwnedThemes((prev: string[]) => [...prev, themeId]);
+      setCurrentTheme(themeId);
+      playClick();
+    }
+  };
+
+  const handleSelectTheme = (themeId: string) => {
+    setCurrentTheme(themeId);
+    playClick();
   };
 
   const handleDailyChallengeComplete = () => {
@@ -527,6 +559,7 @@ export default function Home() {
             stars={stars}
             tasksCompleted={tasksCompleted}
             decorations={decorations}
+            currentTheme={currentTheme}
             streak={streak}
             dailyAvailable={isDailyChallengeAvailable(lastChallengeDate)}
             dailyChallengeProgress={dailyChallengeProgress}
@@ -552,6 +585,7 @@ export default function Home() {
           <MathTask
             key="math"
             config={config}
+            ageGroup={ageGroup}
             onComplete={(earned) => handleTaskComplete("math", earned)}
             onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
           />
@@ -596,6 +630,17 @@ export default function Home() {
             config={config}
             ageGroup={ageGroup}
             onComplete={(earned) => handleTaskComplete("logic", earned)}
+            onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
+          />
+        )}
+
+        {/* WRITING TASK */}
+        {screen === "writing" && config && ageGroup && (
+          <WritingTask
+            key="writing"
+            config={config}
+            ageGroup={ageGroup}
+            onComplete={(earned) => handleTaskComplete("writing", earned)}
             onBack={() => activeBossProject ? setScreen("boss") : setScreen("desk")}
           />
         )}
@@ -702,7 +747,11 @@ export default function Home() {
             key="shop"
             stars={stars}
             ownedDecorations={decorations}
+            ownedThemes={ownedThemes}
+            currentTheme={currentTheme}
             onBuy={handleBuyDecoration}
+            onBuyTheme={handleBuyTheme}
+            onSelectTheme={handleSelectTheme}
             onBack={() => setScreen("desk")}
           />
         )}
@@ -720,6 +769,7 @@ export default function Home() {
             typingCompleted={typingCompleted}
             spellingCompleted={spellingCompleted}
             logicCompleted={logicCompleted}
+            writingCompleted={writingCompleted}
             perfectScores={perfectScores}
             streak={streak}
             stickersCount={stickers.length}
@@ -761,6 +811,7 @@ export default function Home() {
             typingCompleted={typingCompleted}
             spellingCompleted={spellingCompleted}
             logicCompleted={logicCompleted}
+            writingCompleted={writingCompleted}
             perfectScores={perfectScores}
             streak={streak}
             stickersCount={stickers.length}
@@ -804,7 +855,7 @@ export default function Home() {
       )}
 
       {/* Sticker Board - always visible on desk and task screens */}
-      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "spelling" || screen === "logic" || screen === "shop" || screen === "report") && (
+      {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "spelling" || screen === "logic" || screen === "writing" || screen === "shop" || screen === "report") && (
         <StickerBoard stickers={stickers} />
       )}
     </main>
