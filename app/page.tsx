@@ -21,6 +21,9 @@ import BossProjectScreen from "@/components/BossProject";
 import CoworkerGallery from "@/components/CoworkerGallery";
 import CoffeeBreak from "@/components/CoffeeBreak";
 import ParentDashboard from "@/components/ParentDashboard";
+import SpaceBackground from "@/components/SpaceBackground";
+import LuckySpin from "@/components/LuckySpin";
+import RewardChest from "@/components/RewardChest";
 
 type Screen = "welcome" | "difficulty" | "desk" | "math" | "reading" | "typing" | "spelling" | "logic" | "writing" | "celebration" | "shop" | "report" | "boss" | "gallery" | "parent";
 type TaskType = "math" | "reading" | "typing" | "spelling" | "logic" | "writing";
@@ -50,6 +53,7 @@ interface PlayerProfile {
   bossProjectProgress: string[];
   activeBossProject: string | null;
   showPet: boolean;
+  lastSpinDate: string | null;
 }
 
 const PROFILES_KEY = "kidsDeskJobProfiles";
@@ -91,6 +95,7 @@ function loadProfiles(): Record<string, PlayerProfile> {
             bossProjectProgress: [],
             activeBossProject: null,
             showPet: true,
+            lastSpinDate: null,
           },
         };
         localStorage.setItem(PROFILES_KEY, JSON.stringify(migrated));
@@ -152,6 +157,9 @@ export default function Home() {
   const [activeBossProject, setActiveBossProject] = useState<string | null>(null);
   const [showPet, setShowPet] = useState(true);
   const [showCoffeeBreak, setShowCoffeeBreak] = useState(false);
+  const [showLuckySpin, setShowLuckySpin] = useState(false);
+  const [showRewardChest, setShowRewardChest] = useState(false);
+  const [lastSpinDate, setLastSpinDate] = useState<string | null>(null);
   const [selectedAvatar, setSelectedAvatar] = useState<string>(AVATARS[0].id);
 
   const config = ageGroup ? DIFFICULTY_CONFIGS[ageGroup] : null;
@@ -188,10 +196,11 @@ export default function Home() {
         bossProjectProgress,
         activeBossProject,
         showPet,
+        lastSpinDate,
       });
       setSavedProfiles(loadProfiles());
     }
-  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, ownedThemes, currentTheme, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet]);
+  }, [playerName, ageGroup, avatar, stickers, stars, tasksCompleted, decorations, ownedThemes, currentTheme, mathCompleted, readingCompleted, typingCompleted, spellingCompleted, logicCompleted, writingCompleted, perfectScores, lastChallengeDate, streak, dailyChallengeProgress, unlockedAchievements, bossProjectsDone, bossProjectProgress, activeBossProject, showPet, lastSpinDate]);
 
   useEffect(() => {
     if (screen === "celebration" && pendingSticker) {
@@ -234,6 +243,7 @@ export default function Home() {
     setBossProjectProgress(profile.bossProjectProgress || []);
     setActiveBossProject(profile.activeBossProject || null);
     setShowPet(profile.showPet !== false);
+    setLastSpinDate(profile.lastSpinDate || null);
     setIsDailyChallenge(false);
   };
 
@@ -346,6 +356,30 @@ export default function Home() {
     playClick();
   };
 
+  const handleSpinReward = (rewardStars: number) => {
+    setStars((prev: number) => prev + rewardStars);
+    setLastSpinDate(getTodayString());
+  };
+
+  const handleSpaceCollect = (bonus: number) => {
+    setStars((prev: number) => prev + bonus);
+  };
+
+  const handleChestReward = (rewardStars: number) => {
+    setStars((prev: number) => prev + rewardStars);
+  };
+
+  const canSpinToday = lastSpinDate !== getTodayString();
+
+  useEffect(() => {
+    if (screen !== "desk") return;
+    const timer = setTimeout(() => {
+      setShowRewardChest(true);
+      setTimeout(() => setShowRewardChest(false), 10000);
+    }, 30000 + Math.random() * 30000);
+    return () => clearTimeout(timer);
+  }, [screen]);
+
   const handleDailyChallengeComplete = () => {
     const today = getTodayString();
     setLastChallengeDate(today);
@@ -417,7 +451,14 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen w-full">
+    <main className="min-h-screen w-full relative">
+      {/* Interactive Space Background */}
+      {screen !== "welcome" && screen !== "difficulty" && (
+        <SpaceBackground onCollectStar={handleSpaceCollect} />
+      )}
+
+      {/* Content wrapper above background */}
+      <div className="relative z-10">
       <AnimatePresence mode="wait">
         {/* WELCOME SCREEN */}
         {screen === "welcome" && (
@@ -858,6 +899,42 @@ export default function Home() {
       {(screen === "desk" || screen === "math" || screen === "reading" || screen === "typing" || screen === "spelling" || screen === "logic" || screen === "writing" || screen === "shop" || screen === "report") && (
         <StickerBoard stickers={stickers} />
       )}
+      </div>
+
+      {/* Lucky Spin Button - on desk screen */}
+      {screen === "desk" && (
+        <motion.button
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShowLuckySpin(true)}
+          className="fixed bottom-20 left-4 md:left-8 z-40 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full w-14 h-14 flex items-center justify-center text-2xl shadow-lg border-2 border-white/30"
+        >
+          🎡
+        </motion.button>
+      )}
+
+      {/* Lucky Spin Modal */}
+      <AnimatePresence>
+        {showLuckySpin && (
+          <LuckySpin
+            onReward={handleSpinReward}
+            onClose={() => setShowLuckySpin(false)}
+            canSpin={canSpinToday}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Reward Chest - appears periodically */}
+      <AnimatePresence>
+        {showRewardChest && screen === "desk" && (
+          <RewardChest
+            onOpen={handleChestReward}
+            onDismiss={() => setShowRewardChest(false)}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 }
